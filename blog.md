@@ -36,48 +36,11 @@ world — numbers in, numbers out — which means the thing doing the deciding c
 hardcoded rules today and a neural network tomorrow, and the world never notices the swap.
 To push it further more i converted it to a framework where anyone can build around it, add rabit and make the fox chase, add a desease system which will wipe most species every 500 years, checkout the project to learn more https://github.com/afreediz/darwinism/.
 
-## What it actually is
-
-At its core, darwinism is three living things sharing a world:
-
-- **Plants** — not creatures, but a per-cell field of grass that grows back over time and
-  gets eaten down where animals graze.
-- **Sheep** — herbivores. They wander in herds, crop the grass, run from foxes, find water,
-  and look for a mate.
-- **Foxes** — predators. They hunt sheep, and their whole existence is a bet that they can
-  catch enough prey to outrun their own metabolism.
-
-Around them is a world that *does things to them*: **biomes** (ocean, rivers, forest,
-grassland, mountains, desert, tundra), **hydrology** that carves rivers from mountains down
-to the sea, **weather** that rolls between clear, rain and heat, and **seasons** that swing
-the temperature up and down as virtual years pass. It gets cold in winter and grass grows
-slower. It gets hot and animals get thirstier. Night falls and the animals go to sleep.
-
-And every animal carries a **genome** — speed, vision range, metabolism, body size, lifespan,
-aggression, boldness, even a personal "chronotype" that decides whether it's an early riser.
-When two animals breed, their child's genes are a shuffle of both parents' plus a little
-random mutation. Do that for a few hundred generations and the population *isn't the same
-population anymore*. It has adapted. That drift is the whole point.
-
-## Why not just… use the equations?
-
-Because equations give you averages, and I wanted **individuals**. The Lotka–Volterra model
-will happily tell you that predators lag prey. It will *not* tell you what happens when a
-lone fox wanders too far from the pack and can't find a mate, or when a herd gets trapped
-against a coastline, or when a wet year quietly lets both populations climb higher than usual
-before the crash. Those stories only exist when every animal is its own little agent, seeing
-its own slice of the world, making its own decisions, and living with the consequences.
-
-That "making its own decisions" part is the hinge the entire project swings on — and it's why
-I built the whole thing a particular, slightly unusual way. Which brings me to the design
-choices, and they're worth their own chapter.
-
-## A planet made of noise
-
+# The World
 Before anything can live, there has to be somewhere to live. The world is generated from
 **layered simplex noise** — the same family of math that gives video games their rolling,
-organic terrain. A few octaves of it become an elevation map; another becomes moisture.
-From those two fields, everything else is derived:
+organic terrain. A few octaves of it become an elevation map; another becomes moisture. Those
+two fields are the *only* real inputs. Everything else is derived from them:
 
 - **Water** flows downhill. Rivers start from a handful of high-elevation sources and trace
   the steepest descent to the sea, pooling into lakes along the way. The ocean is simply
@@ -85,67 +48,95 @@ From those two fields, everything else is derived:
 - **Temperature** is latitude minus altitude — warm near the equator, cold up a mountain.
 - **Biomes** fall out of the combination: wet and warm becomes forest; dry and hot becomes
   desert; cold becomes tundra; high becomes bare mountain; the rest is open plains.
-- **Soil nutrients** and **plant suitability** follow the moisture and lowlands, so grass is
-  lush in the river valleys and sparse on the rocks.
+- **Soil nutrients** and **plant suitability** follow the moisture and the lowlands, so grass
+  is lush in the river valleys and sparse on the rocks.
+
+I like that ordering because it's the one the real world uses. I never *place* a forest. I
+place moisture and elevation, and the forest is what they imply. The map is a consequence, not
+a decision.
 
 ![The world under the hood](highlights/worldXray.png)
 
-*The same world, X-rayed into the raw fields the simulation actually runs on: ocean mask,
-elevation, moisture, temperature, the biome labels, and the soil-nutrient pool. To the
-animals none of this is a picture — it's just numbers on a grid. That distinction turns out
-to matter enormously, and it's the subject of Part 2.*
+*The same world, X-rayed into the raw fields. ocean mask, elevation, moisture, temperature, the biome labels, and the soil-nutrient pool. To the
+animals none of this is a picture — it's just numbers on a grid.*
 
-Here's the part I'm quietly proud of: **the world is completely reproducible.** darwinism has
-*two independent seeds*. One — the **world seed** — controls terrain and rivers, and nothing
-else. The other — the **run seed** — controls all the *living* randomness: where animals
-spawn, which way the weather turns, who catches whom, who breeds. Feed it the same world seed
-and you get the same map every single time. Feed it the same run seed *on top of that*, and
-you get the same run, tick for tick, down to the last byte.
+### The Beauty of Dynamicity -
 
-That means I can ask precise scientific questions. *Same map, different luck: how often do the
-foxes survive?* Just vary the run seed. *Same luck, different map: does a wetter world carry
-more life?* Just vary the world seed. Reproducibility isn't a nice-to-have here; it's what
-makes the thing an experiment instead of an anecdote.
+A pretty map is scenery. What makes it a *world* is that it changes, and that the changes have
+teeth. On top of the static terrain runs a small stack of moving parts:
+
+- **Hydrology** — rivers carved from the mountains down to the sea, so fresh water is a
+  *place* animals have to travel to, not a stat they top up anywhere.
+- **Weather** that rolls between clear, rain and heat.
+- **Seasons** that swing the temperature up and down as virtual years pass.
+- **A day/night cycle**, because a world where nothing ever rests is missing half of biology.
+
+these aren't decoration — each one reaches into the animals' arithmetic. It gets cold in
+winter and the grass grows slower leading to food shortage. It gets hot and
+animals get thirstier which keeps them closer to rivers. Night falls and they sleep. Each to swing species through different conditions forcing them to adapt.
+
+## Seed system, determinism for a chaotic planet
+
+**the world is completely reproducible.** Every stochastic thing that happens in a run — where
+animals spawn, which way the weather turns, who catches whom, who breeds, how a genome mutates
+— is drawn from a *single* seeded random generator that gets threaded through every system.
+There is no hidden randomness anywhere, give it
+the same seed and you get the same run back: tick for tick, down to the last byte.
+
+Sitting next to that is the **world seed** — It is the map generator, feeds the terrain noise and the river carving.
+
+That's what turns the toy into an instrument — hold one variable still, wiggle the other, and
+whatever changed is a result rather than luck. Change one mechanism — how much cover the forest
+gives, how fast grass regrows — rerun the *same* seed, and the difference in the population
+curves belongs to that mechanism and nothing else. Sweep the same setup across fifty run seeds
+and a single story turns into a distribution you can actually put a number on. Vary only the
+world seed and you're asking whether a wetter planet carries more life, with the rules held
+fixed. And swap a neural network in where the rule brain was — same map, same luck — and what
+you're measuring is the mind, not the dice.
 
 ## Time is just a dial
 
-One more thing the world gives you: **control over time itself.** The simulation advances in
+The last thing the world hands you is **control over time itself.** The simulation advances in
 fixed steps, and how much "reality" each step represents is just a parameter. You can watch it
-live in a window at a gentle pace — sheep ambling, foxes prowling, the sun setting — or you
-can rip the throttle wide open and blow through *tens of thousands of ticks* with no graphics
-at all, fast-forwarding through generations of evolution in the time it takes to make coffee.
+live in a window at a gentle pace — sheep ambling, foxes prowling, the sun setting — or you can
+rip the throttle wide open and blow through *tens of thousands of ticks* with no graphics at
+all, fast-forwarding through generations of evolution in the time it takes to make coffee.
 
 That dual nature — **a live viewer for intuition, a headless engine for data** — runs on the
 *exact same core*. Nothing about the physics changes when you turn the graphics off. The
-window is a spectator, never a participant.
+window is a spectator, never a participant. (Which is also a hard architectural rule: the
+simulation code cannot so much as *import* the renderer. If it could, "does it look right"
+would eventually start deciding what's true.)
 
 And that spectator is worth sitting with for a while, because when you do, you start to see
-things you didn't program: sheep learning (in the crude, evolutionary sense) to hug the
-forest edge where foxes can't follow, fox numbers booming after a good season and then
-crashing, herds fragmenting and re-forming. None of it is scripted. All of it is *emergent* —
-the whole reason the world exists.
+things you didn't program: sheep learning (in the crude, evolutionary sense) to hug the forest
+edge where foxes can't follow, fox numbers booming after a good season and then crashing, herds
+fragmenting and re-forming. None of it is scripted. All of it is *emergent* — the whole reason
+the world exists.
 
----
+## Why it's built like this
 
-## Designing a world an AI can actually live in
-
-Everything I've shown you so far — terrain from noise, rivers from mountains, seasons swinging
+Everything I've just described — terrain from noise, rivers from mountains, seasons swinging
 the temperature, herds and packs going about their business — is driven, today, by hardcoded
 rules. Boring `if` statements. "If a fox is close, run away. If you're hungry and there's
 grass, eat it."
 
 So why did the whole thing take months to build instead of a weekend?
 
-Because I wasn't really building a rule-based animal. I was building **the world that a
-neural network will one day live in** — and I wanted that day to arrive without a single
-rewrite of the world underneath it. Every important decision in darwinism was made in service
-of one sentence:
+Because I wasn't really building a rule-based animal. I was building **the world that a neural
+network will one day live in** — and I wanted that day to arrive without a single rewrite of
+the world underneath it. Every important decision in darwinism was made in service of one
+sentence:
 
 > Everywhere a hardcoded rule sits today, a learned, differentiable model should be able to
 > slot in — with the sim none the wiser.
 
 That constraint is unreasonably demanding, and living up to it is what makes the architecture
-what it is. Here's how it plays out.
+what it is.
+
+---
+
+# The Machine
 
 ## The spine: one contract, everything flows through it
 
@@ -256,6 +247,20 @@ impossible happen. The brain is free to be a messy approximator, because the sys
 grown-ups in the room. Learning is safe precisely because intent and consequence are
 separated.
 
+## Every animal carries a genome
+
+Each animal is born with a genome: speed, vision range, metabolism, body size, lifespan,
+aggression, boldness, even a personal "chronotype" that decides whether it's an early riser.
+These aren't cosmetic labels — they're the actual numbers the physics uses. A high vision gene
+literally widens the window of the world that animal can see; a high metabolism gene literally
+burns its energy faster.
+
+When two animals breed, their child's genes are a shuffle of both parents' plus a little
+random mutation. Nothing selects for anything on purpose. But the animals whose numbers happen
+to suit the world leave more children, and their numbers become more common. Do that for a few
+hundred generations and the population *isn't the same population anymore*. It has adapted.
+That drift is the whole point — it's the output I built the instrument to measure.
+
 ## One tick, always in the same order
 
 All of this happens in a fixed heartbeat. Every tick, the world runs the same sequence:
@@ -273,7 +278,7 @@ movement, eating and hunting, metabolism (burning energy, starving, dying), repr
 and grass regrowth. Finally, the logger records the census.
 
 That fixed order isn't bureaucracy — it's what makes the run **deterministic**. Combined with
-the two-seed system from Part 1, the same world plus the same run seed produces a byte-for-byte
+the two-seed system from earlier, the same world plus the same run seed produces a byte-for-byte
 identical run, every time. When you're trying to tell whether a change to a fox's brain helped
 or hurt, you *need* everything else to be nailed down. Determinism is the control group.
 
