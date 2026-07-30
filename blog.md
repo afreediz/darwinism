@@ -94,72 +94,48 @@ world seed and you're asking whether a wetter planet carries more life, with the
 fixed. And swap a neural network in where the rule brain was — same map, same luck — and what
 you're measuring is the mind, not the dice.
 
-## Time is just a dial
+## We own's the TIME
 
-The last thing the world hands you is **control over time itself.** The simulation advances in
-fixed steps, and how much "reality" each step represents is just a parameter. You can watch it
-live in a window at a gentle pace — sheep ambling, foxes prowling, the sun setting — or you can
-rip the throttle wide open and blow through *tens of thousands of ticks* with no graphics at
-all, fast-forwarding through generations of evolution in the time it takes to make coffee.
+The world hands you **control over time itself.** The simulation advances in fixed steps —
+240 of them make a day in there — and how many of those steps you spend per second of *your*
+time is entirely your call. Slow it down and one minute of sitting at your desk buys you ten
+days inside the world: you can follow a single sheep around, watch it get thirsty, walk to a
+river, drink, and wander off to find grass. Turn the dial the other way and that same minute
+buys you a thousand days — three years of seasons, birth, starvation and mutation, gone past
+while you're still holding the coffee. Nothing about the world changes when you do this. The
+sheep doesn't know it's living faster. You've just decided how much of it you want to see.
 
-That dual nature — **a live viewer for intuition, a headless engine for data** — runs on the
-*exact same core*. Nothing about the physics changes when you turn the graphics off. The
-window is a spectator, never a participant. (Which is also a hard architectural rule: the
-simulation code cannot so much as *import* the renderer. If it could, "does it look right"
-would eventually start deciding what's true.)
+The two ends of that dial are two separate programs sitting on the same core. There's a
+**live viewer**, which is exactly what it sounds like — a window, an observer, pixels for
+your intuition. And there's the **headless runner**, which has no window at all and is where
+the real work happens. That split isn't cosmetic: a rendering engine is bolted to a frame
+rate, and a frame rate is a ceiling. It will not step the world faster than it can draw the
+world, and it has no reason to — nobody can read 10,000 frames a second. Take the drawing
+away and the ceiling disappears; the loop runs as fast as the cpu allows, no limit on how faster the world can run.
 
-And that spectator is worth sitting with for a while, because when you do, you start to see
-things you didn't program: sheep learning (in the crude, evolutionary sense) to hug the forest
-edge where foxes can't follow, fox numbers booming after a good season and then crashing, herds
-fragmenting and re-forming. None of it is scripted. All of it is *emergent* — the whole reason
-the world exists.
 
-## Why it's built like this
+# The Agents
 
-Everything I've just described — terrain from noise, rivers from mountains, seasons swinging
-the temperature, herds and packs going about their business — is driven, today, by hardcoded
-rules. Boring `if` statements. "If a fox is close, run away. If you're hungry and there's
-grass, eat it."
-
-So why did the whole thing take months to build instead of a weekend?
-
-Because I wasn't really building a rule-based animal. I was building **the world that a neural
-network will one day live in** — and I wanted that day to arrive without a single rewrite of
-the world underneath it. Every important decision in darwinism was made in service of one
-sentence:
-
-> Everywhere a hardcoded rule sits today, a learned, differentiable model should be able to
-> slot in — with the sim none the wiser.
-
-That constraint is unreasonably demanding, and living up to it is what makes the architecture
-what it is.
-
----
-
-# The Machine
-
-## The spine: one contract, everything flows through it
-
-There is exactly one doorway between an animal's mind and the world:
+The world is the stage; the agents are the things that actually live on it. "Agent" here is
+just the engineering word for an animal. Each one is a body with state (health, hunger, thirst,
+energy, age, sex), a **genome** it inherits and passes on, and a **brain** that decides what to
+do next. There is exactly one doorway between an
+animal's mind and the world:
 
 ```
 brain.decide(observation) -> action
 ```
 
 That's it. The world hands a brain an **observation** — everything the animal can currently
-perceive. The brain hands back an **action** — what it wants to do. The brain sees *nothing
-else*. No global state, no omniscient "nearest food" oracle, no peeking at the world map. Just
-what its own eyes can reach, and what it decides to do about it.
+perceive. The brain hands back an **action** — what it wants to do.
 
 ![The brain↔world contract](highlights/brainContract.png)
 
 *The spine of the whole design. Perception goes in as pure tensors; a decision comes out as a
 plain matrix of numbers; the world's systems enforce what's actually allowed. Swap the middle
-box — a rule brain today, a neural network tomorrow — and nothing else has to change.*
-
-This sounds obvious. It is *ruthlessly* enforced. The rule-based brain and a future PyTorch
+box — a rule brain today, a neural network tomorrow — and nothing else has to change. The rule-based brain and a future PyTorch
 brain implement the **same interface**, take the **same observation**, and return the **same
-action format**. You choose which one drives each species at launch:
+action format**. You can choose which one drives each species at launch:*
 
 ```bash
 # rule-driven sheep vs. a trained neural-network fox
@@ -170,6 +146,9 @@ A neural fox hunting rule-based sheep. A learned sheep fleeing a scripted fox. A
 world doesn't know or care which is which — because they all speak through the same doorway.
 
 ## Perception: the world as numbers, seen through one animal's eyes
+![What an agent actually sees](highlights/whatAgentSee_15x15.png)
+
+(*A 15×15 slice of what an animal perceives*)
 
 Here's where the "AI-friendly" idea stops being a slogan and becomes concrete geometry.
 
@@ -194,13 +173,6 @@ finally drop a CNN into the brain slot, there is **no translation layer** — pe
 already a tensor, already shaped `(channels × height × width)`, already normalized. I didn't
 bolt on machine-learning compatibility at the end. I made perception *be* the thing an ML
 model wants, from the first line of code.
-
-![What an agent actually sees](highlights/whatAgentSee_15x15.png)
-
-*A 15×15 slice of what an animal perceives — the world rendered as the raw numbers-plus-color
-that the brain receives. Ocean here is a wall of 0s and 1s; elevation, moisture and
-temperature are smooth gradients of floats; the biome map is integer labels. To us it's six
-heatmaps. To the animal, it's the entire universe.*
 
 Alongside the grids, each animal also gets a short **scalar vector** — its own internal state
 and a few global facts: hunger, thirst, energy, health, age, sex, the temperature where it's
