@@ -311,18 +311,23 @@ breeds everyone — and finally logger writes down what happened.*
 ### Optimization: amonium for the potato
 
 One design pressure shapes a surprising amount of the code: I wanted **thousands** of animals
-running for **tens of thousands** of ticks, fast enough to actually iterate on. That rules out
-the obvious design — one object per animal, a big list you loop over.
+running for **tens of thousands** of ticks, fast enough to actually iterate on. Two things stand
+in the way, and either one alone is enough to bring the whole thing to a crawl and cook your
+machine. The first is the classic design **object per animal**, a big list to loop over —
+where every single tick means walking thousands of scattered objects in python which will easily cook our RAM out of PC. The second is the question *"who is near me?"*,
+which every animal asks every tick about food, threats and mates. Compare every animal to every
+other is **quadratic** — double the population and you quadruple the cost — so the
+moment the world gets crowded, the exact moment it gets interesting, the machine dies. So overcoming both challenge is the only option to scale, and we did it :
 
 **[Structure Of Array(SoA)](darwinism/sim/entities.py) :** *no animal objects at all.* Every animal is a row index into parallel NumPy
 arrays — one array of x-positions, one of energies, one of hunger values — which means "make
 every hungry animal a little hungrier" is a single vectorized operation over the whole
 population, this approach with the lightning speed of numpy makes the whole operations alot faster and smooth.
 
-The other bottleneck is *"who is near me?"*, asked every tick about food, threats and mates.
-Compare every animal to every other and it's quadratic. Instead the world is diced into
-buckets in a **[spatial hash grid](darwinism/sim/grid.py)**: each animal drops into its bucket once per tick, and
-neighbour queries only look at the handful of nearby buckets. Perception gets the same
+**[Spatial hash grid](darwinism/sim/grid.py) :** the world is diced into buckets, each animal drops
+into its bucket once per tick, and neighbour queries only look at the handful of nearby buckets —
+so "who is near me?" costs a constant peek at a few cells instead of a sweep over the whole
+population. Perception gets the same
 treatment — the egocentric grids are built as a sliding window over the padded world fields,
 masked by each animal's vision disc, all at once instead of per animal.
 
@@ -330,7 +335,7 @@ masked by each animal's vision disc, all at once instead of per animal.
 
 So that's the machine: perception that's already a tensor, actions that are already
 differentiable, a brain that proposes which the world disposes, a deterministic
-heartbeat, and an engine fast enough to evolve populations across lengthier time. A world built,
+heartbeat, and an engine optimized and faster enough to evolve populations across lengthier time. A world built,
 from the first commit, to be *inhabited by something that learns.*
 
 Now the whole stage is set, its time to put some agents with brain in it and watch things evolve, building strategy to make it learn and survive.
