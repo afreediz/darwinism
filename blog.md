@@ -107,12 +107,13 @@ buys you a thousand days — three years of seasons, birth, starvation and mutat
 while you're still holding the coffee. Nothing about the world changes when you do this. The
 sheep doesn't know it's living faster. You've just decided how much of it you want to see.
 
-The two ends of that dial are two separate programs sitting on the same core. There's a
-**live viewer**, which is exactly what it sounds like — a window, an observer, pixels for
-your intuition. And there's the **headless runner**, which has no window at all and is where
-the real work happens. That split isn't cosmetic: a rendering engine is bolted to a frame
-rate, and a frame rate is a ceiling. It will not step the world faster than it can draw the
-world, and it has no reason to — nobody can read 10,000 frames a second. Take the drawing
+![Time slowed to a quarter speed](highlights/demo0.25x.gif)
+
+![The same world at four times speed](highlights/demo4x.gif)
+
+The engine which runs whole logic and the viewer which present it as GUI are seperate. There's a
+**live viewer** — a window, an observer, draws the pixels.
+**headless runner** — which has no window at all and is where the real work happens. It is made this way because of frame rate, which is a ceiling that could limit us the amount of steps we can do per second, most game/GUI engine sets FPS limit as nobody can read 10,000 frames a second. Take the drawing
 away and the ceiling disappears; the loop runs as fast as the cpu allows, no limit on how faster the world can run.
 
 
@@ -222,7 +223,7 @@ never use; a sheep never carries channels for prey it doesn't hunt. Each species
 inputs that mean something to it — so a future per-species network has no dead neurons wired
 to nothing.
 
-## Actions: soft numbers, not hard branches
+## Actions: let brain cook
 
 If perception is the input a network wants, actions are the output a network can actually
 *produce*. decisions is a row of six numbers:
@@ -234,7 +235,7 @@ If perception is the input a network wants, actions are the output a network can
 actions are **continuous and differentiable.** so a
 neural network can learn by gradient descent.
 
-## The world pushes back: propose vs. dispose
+## The world pushes back: propose vs dispose
 
 There is no free will, If the brain says "eat," should the
 animal just… eat? What if there's no food next to it? What if it's lying about being next to a
@@ -307,46 +308,34 @@ All of this happens in a fixed heartbeat. Every tick, the world runs the sequenc
 local view, asks each brain to decide, lets the sleepers rest, then moves, feeds, ages, and
 breeds everyone — and finally logger writes down what happened.*
 
-## The part nobody sees: making it fast
+### Optimization: amonium for the potato
 
-There's one more design pressure I haven't mentioned, and it's the one that dictates a
-surprising amount of the code: I wanted **thousands** of animals, running for **tens of
-thousands** of ticks, fast enough to actually iterate on.
+One design pressure shapes a surprising amount of the code: I wanted **thousands** of animals
+running for **tens of thousands** of ticks, fast enough to actually iterate on. That rules out
+the obvious design — one object per animal, a big list you loop over.
 
-The naive way to write a simulation is one object per animal — a `Sheep` class, a `Fox` class,
-a big list you loop over. That's clean, readable, and completely hopeless at this scale. So
-darwinism does the opposite. There are **no animal objects at all.** Every animal is just a
-row index into a set of parallel arrays: one big array of x-positions, one of y-positions, one
-of energies, one of hunger values, and so on. Ten thousand sheep aren't ten thousand objects —
-they're a slice of a NumPy array, and "make every hungry animal a little hungrier" is a single
-vectorized operation over the whole population at once. This is called *Structure-of-Arrays*,
-and it's the difference between a Python loop and raw numerical throughput.
+**[Structure Of Array(SoA)](darwinism/sim/entities.py) :** *no animal objects at all.* Every animal is a row index into parallel NumPy
+arrays — one array of x-positions, one of energies, one of hunger values — which means "make
+every hungry animal a little hungrier" is a single vectorized operation over the whole
+population, this approach with the lightning speed of numpy makes the whole operations alot faster and smooth.
 
-The other bottleneck is *"who is near me?"* — a question every animal asks every tick, about
-food, threats, and mates. Ask it naively and you compare every animal to every other animal:
-a million comparisons for a thousand animals, and it only gets worse. Instead, darwinism keeps
-a **spatial hash grid** — the world is diced into buckets, every animal is dropped into its
-bucket once per tick, and "who's near me" only ever looks at the handful of nearby buckets.
-That turns a quadratic nightmare into something that scales roughly linearly, and it's the
-reason the whole ecosystem hums along instead of grinding.
-
-Even perception — building those egocentric grids for every animal — is done as array
-gymnastics rather than per-animal loops: a sliding window over the padded world fields,
-masked by each animal's vision disc, all at once. Numbers, matrices, and clever indexing, all
-the way down.
+The other bottleneck is *"who is near me?"*, asked every tick about food, threats and mates.
+Compare every animal to every other and it's quadratic. Instead the world is diced into
+buckets in a **[spatial hash grid](darwinism/sim/grid.py)**: each animal drops into its bucket once per tick, and
+neighbour queries only look at the handful of nearby buckets. Perception gets the same
+treatment — the egocentric grids are built as a sliding window over the padded world fields,
+masked by each animal's vision disc, all at once instead of per animal.
 
 ---
 
 So that's the machine: perception that's already a tensor, actions that are already
-differentiable, a brain that only proposes while the world disposes, a deterministic
-heartbeat, and an engine fast enough to evolve populations across deep time. A world built,
+differentiable, a brain that proposes which the world disposes, a deterministic
+heartbeat, and an engine fast enough to evolve populations across lengthier time. A world built,
 from the first commit, to be *inhabited by something that learns.*
 
-Which raises the obvious question: **did I actually put a learner in it?**
+Now the whole stage is set, its time to put some agents with brain in it and watch things evolve, building strategy to make it learn and survive.
+That's Part 2 of this series.
 
-I did. Some of it worked beautifully. Some of it humbled me. That's Part 2 of this series.
-
----
 ---
 
 # darwinism, Part 2: Teaching the animals to think — and where this is all going
