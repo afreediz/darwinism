@@ -806,23 +806,23 @@ the selecting:
   implies.
 - **And out at the edge: tools and nests.** Not because I programmed a "build nest" behaviour,
   but because the animals that happened to do it survived better, and their descendants
-  inherited the habit *and* the body to support it, the elder ones in the colonies communicate informations to the younger ones. This is where the two halves meet — a
+  inherited the habit *and* the body to support it, the elder ones in the colonies communicated their knowledge to the younger ones. This is where the two halves meet — a
   material world hands the creature something to pick up, and an evolvable body eventually
   grows the thing that can pick it up.
 
 The dream is a world where you don't *define* the species. You define the **physics, the
 possible parts, and the pressures** — and then you press play and watch the tree of life fill
-itself in. Where "Terrestrial", "Aquatic" and "Aerial" aren't categories I typed into a config file,
+itself in. Where "Terrestrial", "Aquatic" and "Aerial" aren't categories we typed into a config file,
 but *answers the world discovered* to the problem of staying alive in the ground, ocean or air.
 
 That's why every design choice fought so hard to keep the brain and the body as **numbers so a
-model can evolve and a network can learn**, rather than logic a programmer has to hand-write.
+model can learn and evolve**, rather than logic a programmer has to hand-write.
 Hardcoded rules can't grow wings. Distributions, genomes, and differentiable policies can.
 
 ## Why bother? What it's actually *for*
 
-This isn't just a very elaborate screensaver. A world like this is a **laboratory for
-questions you cannot ethically or practically ask of the real one**:
+A world like this is a **laboratory for
+questions you cannot practically ask for the real one, simulating scenerios, studying about the intelligence itself**:
 
 - **Evolution, sped up and rewound** Simulate the same world thousands of times under different random conditions to separate determinism from chance. Replay entire lineages. Lock a single trait in place and observe the consequences. Millions of years of evolution, compressed into a reproducible controllable user-paced experiment on your laptop.
 - **Ecology, under the microscope.** What *exactly* makes a predator and prey coexist versus
@@ -862,9 +862,7 @@ way down.
 ---
 
 I set out to answer a childhood-sized question — *how does all this complexity come from
-simple things bumping into each other?* — and ended up building a machine whose entire purpose
-is to *keep asking it*, faster and deeper than the real world ever could. Two species and a
-grassy plain today. A planet filling itself with invented life tomorrow.
+simple things bumping into each other?* — now I got answer to many of it along the way but ended up with more questions than before and a project worth sharing and putting effort into.
 
 If any of that resonates, come poke at it. Break it. Grow something strange in it. And if it
 made you think — a star on the repo genuinely helps, and is much appreciated.
