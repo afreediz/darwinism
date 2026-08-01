@@ -1,11 +1,11 @@
-# darwinism: I built a world so I could watch things evolve
+# darwinism: Simulating a world for AI and teaching them to Live.
 
-*A two-part series on building an AI friendly ecosystem-and-evolution
+<!-- *A two-part series on building an AI friendly ecosystem-and-evolution
 simulation — a whole planet of terrain, weather and seasons where agents as animals hunt, flee,
 breed, and evolve across generations, where everything is engineered from the ground up so that a neural
 network can one day take over their minds.*
 
-*Part 1 of 2 — the idea, the world and the agents*
+*Part 1 of 2 — the idea, the world and the agents* -->
 
 ---
 
@@ -14,27 +14,16 @@ network can one day take over their minds.*
 *(White dots are sheep. Red dots are foxes. The green haze is grass. A tiny black dot on an
 animal's shoulder marks a male; the ones without are female.)*
 
-## The Idea
 I've always been a little obsessed with one question: **where does life come from?** How does
 a pile of lifeless compounds ever become something that can move, breed, *think* — and then,
 astonishingly, turn around and start unravelling the mystery of what it came from?  
 We have
 answers, but almost all of them are *hypothesis*: we read the clues left in today's world,
 run the story backward to guess how things must once have been, and then hunt for whatever
-else that guess would predict. It's clever, but it introduces many theories where only one of them can be actually true. Wouldn't it be much cooler to just *watch*
-the animal evolve? But nothing worth evolves on a human lifescale and we will never live live long enough to see one. So I built a way to cheat.  
-**In here, time is a dial I get to turn.** Ten
-seconds of my afternoon can be a full day inside the world; whole generations can rise and
-fall while my coffee goes cold. Evolution stops being a story I read about and becomes
-something I can lean in and *watch happen*. The animals in it are built to be AI-friendly, in the sense that its brain never sees a
-picture or an object — it only ever sees **numbers**. Perception hands it a small stack of
-numeric grids centred on itself (what terrain is around me, where the water is, where the food
-is, where the threats are), plus a short vector of how it's doing inside (health, hunger,
-thirst, energy, age). The brain's answer is numbers too: which way to head, how hard to run,
-and whether to eat, drink or breed. That's the entire conversation between a mind and this
-world — numbers in, numbers out — which means the thing doing the deciding can be a page of
-hardcoded rules today and a neural network tomorrow, and the world never notices the swap.
-To push it further more i converted it to a framework where anyone can build around it, add rabit and make the fox chase, add a desease system which will wipe most species every 500 years, checkout the project to learn more https://github.com/afreediz/darwinism/.
+else that guess would predict. It's clever, but it causes alot uncertanities and often introduces many theories where only one of them could be be actually true. Wouldn't it be much cooler if we could just *watch* how the living beings are evolving without bare eye's? But nothing worth evolves on a human lifescale and we will never live live long enough to see one, So I built a way to cheat.
+Consider a virtual world where the physical laws are very closer to the real world, which has terrains like mountains, forest, deserts, oceans and rivers with dynamic weather, temperature and seasons interacting with each other and all of these are build with pure numbers such that an AI model can actually see and learn to survive in it, by exploring, grazing, hunting, fleeing, breeding it developing different strategies to survive and adapt to exploit the best rewards and to live to its fullest. Much more than all this, here the time is things that you can control, make it slow enough to inspect one of the sheep and see the world through its own eye or make it fast enough to see generation of changes and thousands of virtual days passing before your cofee goes cold. To push further what if we converted this to a framework where anyone can build around it, add rabit and make the fox chase, add a desease system which will wipe most species every 500 years. That is darwinism, checkout the project to learn more https://github.com/afreediz/darwinism/ .
+
+*In this blog we will explore the fundermentals of darwinism, why each is build the way it is, some internal algorithms and technique used to build this, the surpricing results and challenges solved and still exist. without wastin much time lets get into it :*
 
 # The World
 Before anything can live, there has to be somewhere to live. The world is generated from
@@ -42,18 +31,16 @@ Before anything can live, there has to be somewhere to live. The world is genera
 organic terrain. A few octaves of it become an elevation map; another becomes moisture. Those
 two fields are the *only* real inputs. Everything else is derived from them:
 
+- **Biomes** fall out of the combination: wet and warm becomes forest; dry and hot becomes
+  desert; cold becomes tundra; high becomes mountains; the rest is open plains.
+- **Soil nutrients** and **plant suitability** follow the moisture and the lowlands, so grass
+  is lush in the river valleys and sparse on the rocks, nutrients & sunlight are absorbed by the plants to grow which are then eaten by herbivors.
 - **Water** flows downhill. Rivers start from a handful of high-elevation sources and trace
   the steepest descent to the sea, pooling into lakes along the way. The ocean is simply
   everything below sea level.
 - **Temperature** is latitude minus altitude — warm near the equator, cold up a mountain.
-- **Biomes** fall out of the combination: wet and warm becomes forest; dry and hot becomes
-  desert; cold becomes tundra; high becomes bare mountain; the rest is open plains.
-- **Soil nutrients** and **plant suitability** follow the moisture and the lowlands, so grass
-  is lush in the river valleys and sparse on the rocks.
 
-I like that ordering because it's the one the real world uses. I never *place* a forest. I
-place moisture and elevation, and the forest is what they imply. The map is a consequence, not
-a decision.
+The order is the one real world uses. We never *place* a forest. we place moisture and elevation, and the forest is what they imply. The map is a consequence, not a decision, also everything from sea level to soil nutrients are [`configurable`](darwinism\config.py) . The whole world from elevation, biome classification, temperature or even upto water are pure numbers in a width x height grid. A sample X-ray of the world :
 
 ![The world under the hood](highlights/worldXray.png)
 
@@ -62,46 +49,29 @@ animals none of this is a picture — it's just numbers on a grid.*
 
 ### The Beauty of Dynamicity -
 
-A pretty map is scenery. What makes it a *world* is that it changes, and that the changes have
-teeth. On top of the static terrain runs a small stack of moving parts:
+A pretty map is scenery. What makes it a *world* is that it changes. On top of the static terrain runs a small stack of moving parts:
 
 - **Hydrology** — rivers carved from the mountains down to the sea, so fresh water is a
   *place* animals have to travel to, not a stat they top up anywhere.
-- **Weather** that rolls between clear, rain and heat.
+- **Weather** that rolls between clear, rain and heat which affects surroundings like rain boosts the growth of plants and heat increases the thirst of animals.
 - **Seasons** that swing the temperature up and down as virtual years pass.
 - **A day/night cycle**, because a world where nothing ever rests is missing half of biology.
 - **Grass** growing in every cell up to what that soil can carry — thick on wet grassland, none
   on rock — so grazing strips a patch and the herd has to move on while it grows back.
 
-these aren't decoration — each one reaches into the animals' arithmetic. It gets cold in
+Each one of these reaches into the animals' arithmetic. It gets cold in
 winter and the grass grows slower leading to food shortage. It gets hot and
 animals get thirstier which keeps them closer to rivers. Night falls and they sleep. Each to swing species through different conditions forcing them to adapt.
 
 ## Seed system, determinism for a chaotic planet
 
-**the world is completely reproducible.** Every stochastic thing that happens in a run — where
-animals spawn, which way the weather turns, who catches whom, who breeds, how a genome mutates
-— is drawn from a *single* seeded random generator that gets threaded through every system.
-There is no hidden randomness anywhere, give it
-the same seed and you get the same run back: tick for tick, down to the last byte.
-
-Sitting next to that is the **world seed** — It is the map generator, feeds the terrain noise and the river carving.
-
-That's what turns the toy into an instrument — hold one variable still, wiggle the other, and
-whatever changed is a result rather than luck. Change one mechanism — how much cover the forest
-gives, how fast grass regrows — rerun the *same* seed, and the difference in the population
-curves belongs to that mechanism and nothing else. Sweep the same setup across fifty run seeds
-and a single story turns into a distribution you can actually put a number on. Vary only the
-world seed and you're asking whether a wetter planet carries more life, with the rules held
-fixed. And swap a neural network in where the rule brain was — same map, same luck — and what
-you're measuring is the mind, not the dice.
+**the world is completely reproducible.**, One another cool feature to have is reproducability even when the world appears random and chaotic, consider your running the evolution and spot a beautiful act from an entity which is valuable or serve as the proof of one of your research, but you forgot to record. It's fine because even though the whole systems appears to run randomly, they are generated from a random number generator which we can initialise with a seed - a unique number which gives the same random sequence of numbers for the same seed. So, actually there is no hidden randomness anywhere, give it the same seed and you get the same run back: tick for tick, down to the last byte.
+The framework also provides infinite number of map possiblities by using the world-seed parameter which is used by the opensimplex to generate noise.
 
 ## We own's the TIME
 
-The world hands you **control over time itself.** The simulation advances in fixed steps —
-240 of them make a day in there — and how many of those steps you spend per second of *your*
-time is entirely your call. Slow it down and one minute of sitting at your desk buys you ten
-days inside the world: you can follow a single sheep around, watch it get thirsty, walk to a
+Now the most interesting part, the world hands you **control over time itself.** The simulation advances in fixed steps — 240 of them make a day in there — and how many of those steps you spend per second of *your*
+time is entirely your call, we can configure the `dt` which determines how much steps are taken per iteration. Slow it down and one minute of sitting at your desk buys you ten days inside the world: you can follow a single sheep around, watch it get thirsty, walk to a
 river, drink, and wander off to find grass. Turn the dial the other way and that same minute
 buys you a thousand days — three years of seasons, birth, starvation and mutation, gone past
 while you're still holding the coffee. Nothing about the world changes when you do this. The
@@ -112,10 +82,8 @@ sheep doesn't know it's living faster. You've just decided how much of it you wa
 ![The same world at four times speed](highlights/demo4x.gif)
 
 The engine which runs whole logic and the viewer which present it as GUI are seperate. There's a
-**live viewer** — a window, an observer, draws the pixels.
-**headless runner** — which has no window at all and is where the real work happens. It is made this way because of frame rate, which is a ceiling that could limit us the amount of steps we can do per second, most game/GUI engine sets FPS limit as nobody can read 10,000 frames a second. Take the drawing
-away and the ceiling disappears; the loop runs as fast as the cpu allows, no limit on how faster the world can run.
-
+[**live viewer**](darwinism\sim) — a window, an observer, draws the pixels.
+[**headless runner**](darwinism\render) — which has no window at all and is where the real work happens. It is made this way because of frame rate, which is a ceiling that could limit us the amount of steps we can do per second, most GUI/game engine sets FPS limit as nobody can read 10,000 frames a second. Take the drawing away and the ceiling disappears; the loop runs as fast as the cpu allows, no limit on how faster the world can run.
 
 # The Agents
 
@@ -123,14 +91,13 @@ The world is the stage; the agents are the things that actually live on it. "Age
 just the engineering word for an animal. Each one is a body with state (health, hunger, thirst,
 energy, age, sex), a **genome** it inherits and passes on, and a **brain** that decides what to
 do next — fed only an **egocentric local view**: a small window of the world centred on the
-animal itself, out to the limit of its sensory range.
+animal itself, upto to the limit of its sensory range. The brain recieves a set of observation and the brain hands back what it decided to do based on the observation.
 
 ```
 brain.decide(observation) -> action
 ```
 
-The world hands a brain an **observation** — everything the animal can currently
-perceive. The brain hands back an **action** — what it wants to do.
+Like the real world, the brain is essentially a black box inside the skull. It receives information from our sensory organs, processes it, and sends commands to the rest of the body.
 
 ![The brain↔world contract](highlights/brainContract.png)
 
@@ -164,7 +131,50 @@ cfg.species[RABBIT] = dw.SpeciesConfig(
 > mutation and logging all pick it up for free — including `burrow_depth` as a brand-new
 > heritable trait for selection to push on.
 
-## Perception: the world as numbers, seen through one animal's eyes
+A new prey species is only half the story though — somebody has to eat it. Predation is just
+another diet source, so pointing the fox at the rabbit is one line: add the rabbit's id to the
+fox's prey list.
+
+```python
+cfg.species[dw.FOX].diet = [
+    dw.PreyFood(prey=[dw.SHEEP, RABBIT],                 # now hunts both
+                predation_gain=0.72, hunt_success=0.7, hunt_halfsat=90.0),
+]
+```
+
+The fox's `food` perception channel now lights up for rabbits as well as sheep, the rabbit's
+`threat` channel lights up for foxes, and `consumption` runs the same Type III kill roll
+against whichever prey it's actually standing next to. Nothing in the tick order changed.
+
+And because `diet` is a *list*, a species isn't limited to one food source or one kind of food.
+Here's a lion that eats sheep **and** foxes — a second-order predator sitting on top of the
+existing food chain:
+
+```python
+LION = 3
+cfg.species[LION] = dw.SpeciesConfig(
+    name="lion", species_id=LION, init_count=8,
+    diet=[dw.PreyFood(prey=[dw.SHEEP, dw.FOX],           # apex: eats prey AND predator
+                      predation_gain=0.8, hunt_success=0.55, hunt_halfsat=60.0)],
+    gene_ranges={
+        "max_speed":       dw.GeneRange(1.2, 2.6),
+        "sensory_range":   dw.GeneRange(12.0, 30.0),
+        "size":            dw.GeneRange(1.6, 2.6),
+        "aggression":      dw.GeneRange(0.5, 1.0),
+        "repro_threshold": dw.GeneRange(0.7, 0.9),
+    },
+    cluster=(2, 4.0),                                    # a couple of prides
+    litter_size=2, repro_cost=0.4, repro_cooldown=200.0,
+    hunger_rate=0.0018, base_burn=0.0009, population_cap=60,
+)
+```
+
+Nobody wrote "lions eat foxes" anywhere in the simulation. The predation graph is *derived*
+from the diet declarations (`prey_of` / `predators_of` in `config.py`), so the fox — until now
+purely a hunter — automatically grows a `threat` channel in its own perception and starts
+fleeing something. A third trophic level appears out of two dataclasses.
+
+## Perception: precieving the world of numbers
 ![What an agent actually sees](highlights/whatAgentSee_15x15.png)
 
 (*A 15×15 slice of what an animal perceives*)
@@ -198,42 +208,34 @@ with the map, it moves with the animal, and cell `(0, 0)` is always *the agent i
               .    .    .   3.0   .    .    .
 ```
 
-(*The `distance` channel: zero under the animal's feet, rising with radius, and cut back to
-zero outside its heritable vision range and off the edge of the world.*)
-
 Everything outside the animal's personal vision range is zeroed out. A sheep with weak eyes
 sees a small disc; a sharp-eyed fox sees a big one. Nothing is global. Blindness is real —
-and the time an animal spends *not* seeing anything interesting becomes exploration.
+when the time an animal doesnt have any mate/food within its vision range, It explores the world.
 
 Why grids? Because a stack of egocentric grids is *exactly* the input a convolutional neural
 network eats for breakfast. This is the same data structure as an image with channels. When I
 finally drop a CNN into the brain slot, there is **no translation layer** — perception is
-already a tensor, already shaped `(channels × height × width)`, already normalized. I didn't
-bolt on machine-learning compatibility at the end. I made perception *be* the thing an ML
-model wants, from the first line of code.
+already a tensor, already shaped `(channels × height × width)`, already normalized.
 
 Alongside the grids, each animal also gets a short **scalar vector** — its own internal state
 and a few global facts: hunger, thirst, energy, health, age, sex, the temperature where it's
-standing, the time of day, the season, and how far its eyes reach. Body sense plus world
-sense. Exactly the mix of "what a CNN sees" (the grids) and "what an MLP reasons over" (the
+standing. Exactly the mix of "what a CNN sees" (the grids) and "what an MLP reasons over" (the
 scalars) that a modern policy network is built to fuse.
 
-And crucially, **perception is per-species**. A fox never carries a "threat" channel it would
-never use; a sheep never carries channels for prey it doesn't hunt. Each species gets only the
-inputs that mean something to it — so a future per-species network has no dead neurons wired
-to nothing.
+And crucially, **perception is per-species**. Natively, a fox never carries a "threat" channel it would never use; a sheep never carries channels for prey it doesn't hunt. Each species gets only the
+inputs that mean something to it — so a future per-species network has no dead neurons wired to nothing.
 
 ## Actions: let brain cook
 
 If perception is the input a network wants, actions are the output a network can actually
 *produce*. decisions is a row of six numbers:
-
+```
+[x, y, s, e, d, r]
+```
 - **heading** — a direction to move (two numbers, x and y)
 - **speed** — a throttle from 0 (hold still) to 1 (full sprint)
 - **eat / drink / reproduce** — three "gates," each a value between 0 and 1
-
-actions are **continuous and differentiable.** so a
-neural network can learn by gradient descent.
+actions are **continuous and differentiable.** so a neural network can learn by gradient descent.
 
 ## The world pushes back: propose vs dispose
 
@@ -242,16 +244,13 @@ animal just… eat? What if there's no food next to it? What if it's lying about
 mate?
 
 The answer is that **the brain only ever *proposes*.** It expresses intent. Whether that
-intent becomes reality is decided by the world's **systems** — separate pieces of logic that
-enforce the actual rules of physics and biology. The brain says "I want to eat"; the
-consumption system checks whether there's really grass in the cell the animal is standing on.
+intent becomes reality is decided by the world's [**systems**](darwinism\sim\systems) — separate pieces of logic that enforce the actual rules of physics and biology. The brain says "I want to eat"; the consumption system checks whether there's really grass in the cell the animal is standing on.
 The brain says "I want to breed"; the reproduction system checks whether there's genuinely an
 eligible partner within arm's reach, and whether both animals have the energy to spare.
 
 This split is doing real work. It means a neural network can be **wrong, greedy, or confused**
 — it can want to eat empty ground, or flee toward a wall — and the world simply won't let the
-impossible happen. The brain is free to be a messy approximator, because the systems are the one enforcing what happens. Learning is safe precisely because intent and consequence are
-separated.
+impossible happen. The brain is free to be a messy approximator, because the systems are the one enforcing what happens. Learning is safe precisely because intent and consequence are different.
 
 > The systems *are* the rules — and they're just a list you hand to the simulation. You can
 > add a new law of nature yourself, example :
@@ -288,7 +287,7 @@ sim = dw.Simulation(cfg, systems=[*dw.default_pipeline(cfg), MyDiseaseSystem()])
 > seeded RNG — and the same hook takes droughts, wildfires, migration, territoriality. You can
 > reorder or replace the built-in systems too.
 
-## Every animal carries a genome
+## Genome
 
 Each animal is born with a genome: speed, vision range, metabolism, body size, lifespan,
 aggression, boldness, even a personal "chronotype" that decides whether it's an early riser or a night owl. A high vision gene widens the window of the world that animal can see; a high metabolism gene burns its energy faster.
@@ -298,7 +297,7 @@ random mutation. Nothing selects for anything on purpose. But the animals whose 
 to suit the world leave more children, and their numbers become more common. Do that for a few
 hundred generations and the population *isn't the same population anymore*. It has adapted.
 
-### Tick system
+## Tick system
 
 All of this happens in a fixed heartbeat. Every tick, the world runs the sequence:
 
@@ -313,59 +312,73 @@ breeds everyone — and finally logger writes down what happened.*
 One design pressure shapes a surprising amount of the code: I wanted **thousands** of animals
 running for **tens of thousands** of ticks, fast enough to actually iterate on. Two things stand
 in the way, and either one alone is enough to bring the whole thing to a crawl and cook your
-machine. The first is the classic design **object per animal**, a big list to loop over —
-where every single tick means walking thousands of scattered objects in python which will easily cook our RAM out of PC. The second is the question *"who is near me?"*,
-which every animal asks every tick about food, threats and mates. Compare every animal to every
-other is **quadratic** — double the population and you quadruple the cost — so the
-moment the world gets crowded, the exact moment it gets interesting, the machine dies. So overcoming both challenge is the only option to scale, and we did it :
+machine. The first is the classic design pattern used by games in which each **entity is an object**, but it would lead to a big list to loop over — where every single tick means walking thousands of scattered objects in python which will easily cook our RAM out of PC. The second is the frequently used function **Nearest X**, which every animal uses in every tick to find nearest prey or nearest best grass or nearest threat, Compare every animal to every other is **quadratic** — double the population and you quadruple the cost — so the moment the world gets crowded, the exact moment it gets interesting, the machine dies. So overcoming both challenge is the only option to scale or it will waste both computation and memory, to solve them we use some efficent approaches :
 
-**[Structure Of Array(SoA)](darwinism/sim/entities.py) :** *no animal objects at all.* Every animal is a row index into parallel NumPy
-arrays — one array of x-positions, one of energies, one of hunger values — which means "make
-every hungry animal a little hungrier" is a single vectorized operation over the whole
-population, this approach with the lightning speed of numpy makes the whole operations alot faster and smooth.
+**[Structure Of Array(SoA)](darwinism/sim/entities.py) :** *no animal objects at all.* Every animal is a row index into parallel NumPy arrays — one array of x-positions, one of energies, one of hunger values — which means "make every hungry animal a little hungrier" is a single vectorized operation over the whole population, this approach with the lightning speed of numpy makes the whole operations alot faster and smoother.
 
 **[Spatial hash grid](darwinism/sim/grid.py) :** the world is diced into buckets, each animal drops
 into its bucket once per tick, and neighbour queries only look at the handful of nearby buckets —
 so "who is near me?" costs a constant peek at a few cells instead of a sweep over the whole
-population. Perception gets the same
-treatment — the egocentric grids are built as a sliding window over the padded world fields,
-masked by each animal's vision disc, all at once instead of per animal.
+population. Perception gets the same treatment — the egocentric grids are built as a sliding window over the padded world fields, masked by each animal's vision disc, all at once instead of per animal.
 
 ---
 
-So that's the machine: perception that's already a tensor, actions that are already
+So that's all about the world: perception that's already a tensor, actions that are already
 differentiable, a brain that proposes which the world disposes, a deterministic
-heartbeat, and an engine optimized and faster enough to evolve populations across lengthier time.
+heartbeat, and an engine optimized enough to evolve populations across lengthier time.
 
-Now the whole stage is set, its time to put some agents with brain in it and watch things evolve, building strategy to make it learn and survive.
+# Teaching the agents to think
 
-# Teaching the agents to think — and where this is all going
-
-Everything so far is stage — terrain, water, weather, seasons for an entity to live on evolve. the entities which we are going to build now will interact with the enviorment, explore, eat, breed, hunt and evolve, it introduces many challenges from evolution to intelligence, from coexistence to reinforcement learning.
+Life is no longer scripted. Every creature must perceive its world, make decisions, compete for resources, escape predators, find mates, and adapt to a changing environment. From the emergence of intelligence to the forces of evolution, Now we will explores how to mimick decision making and intelligence through simple rules, letting the intelligence naturally evolve through reinforcement learning and how will the species coexist.
 
 ## The first Brain: hardcoded rules
 
-Before reaching for a *learnable* brain, We had to prove survival is possible — that these
-observations can be mapped to actions that keep an animal alive, by *any* algorithm at all. If
+Before reaching for a *learnable* brain, We have to prove survival is possible — that by using *any algorithm* these
+observations can be mapped to actions that can keep an animal alive, because If
 hand-written rules can't do it, no gradient is going to find its way there either. So the first
 mind is deliberately hardcoded: a few hundred lines of `if` statements called
 [`RuleBrain`](darwinism/sim/brain.py). It's the
-existence proof, and once it works it doubles as the teacher every learned brain gets measured
-against.
+existence proof, and once it works it can also be used as the teacher every learned brain gets measured against.
 
 RuleBrain receives a stack of egocentric image channels — terrain, water, food, threat,
 mate, plus a radial distance channel — a little `K×K` picture centred on each animal. A neural
 network eats that natively. Hand-written `if` statements cannot. So the rule brain's first job
 is to *undo* the picture: **decode each channel back into a single target.** which are two operations
 
-- **Nearest.** For threats, water, and mates, all that matters is *which one is closest.* Scan
-  the channel, take the non-zero cell with the smallest radial distance, and report back its
-  offset and how far away it is. A sheep doesn't care which fox — it cares about the near one.
-- **Best.** For grass, closest isn't right. A sparse cell underfoot is worse than a lush patch
-  a short walk away, so the score is `value − 0.02 × distance`: pick the *richest* patch in
-  sight, with a mild pull toward the near ones. Each species declares which reduction its food
-  channel wants, so foxes read "nearest exposed prey" and sheep read "best pasture" through the
-  exact same code path.
+The distance itself comes straight out of Pythagoras. For a `K×K` window with radius
+`R = (K−1)/2`, every cell has an integer offset `(ox, oy)` from the centre, so its distance from
+the animal is just `√(ox² + oy²)` — the hypotenuse of the offset triangle. Those offsets and
+their distances depend only on `K`, never on *which* animal is looking, so the brain builds that
+stencil once and caches it per window size. Decoding a channel then costs one comparison per
+cell and no trigonometry at all.
+
+With the stencil in hand, reducing a channel to a target is an `argmin`/`argmax` over a masked
+score, vectorised across every animal at once:
+
+- For threats, water and mates the score is *distance* — mask out empty cells by setting them to
+  `+∞`, then `argmin`. A sheep doesn't care which fox; it cares about the near one.
+- For grass, closest isn't right: a sparse cell underfoot is worse than a lush patch a short walk
+  away. So cells below the grazing threshold go to `−∞` and the rest score
+  `value − 0.02 × distance` — pick the *richest* patch in sight, with a mild pull toward the near
+  ones. Each species declares which reduction its food channel wants, so foxes read "nearest
+  exposed prey" and sheep read "best pasture" through the exact same code path.
+
+Either way the reduction hands back four numbers per animal: a `present` flag, the cell offset
+`(dx, dy)`, and the distance. `present` matters — the `±∞` trick means "nothing found" falls out
+as a non-finite score rather than a special case, and every downstream rule is guarded by it.
+Distances are then divided by that animal's own `sensory_range` and clipped to `[0, 1]`, which is
+the trick that makes the rest of the brain gene-agnostic: a keen-eyed sheep and a myopic one both
+reason in fractions of *their own* vision, so a single constant like `0.25` means "close" for
+everybody, and the same thresholds keep working while sensory range mutates across generations.
+
+Two more small pieces of arithmetic run through everything. Headings are always unit vectors:
+take the raw offset, divide by its magnitude `√(dx² + dy²)`, and fall back to zero when the
+magnitude is degenerate — so the brain only ever emits a *direction*, and the speed throttle stays
+an independent column. And urgency is a scalar squeezed out of internal state — `food_need`,
+`thirst` — compared against fixed thresholds to decide whether a need is worth acting on, and
+which of two competing needs wins. Gates are the same idea in binary: a gate is raised when its
+target reads within `0.25` of sensory range *and* the corresponding internal state is unsatisfied
+— a proposal the world's own systems then re-check against true adjacency.
 
 With channels decoded, the decision itself is **strict priority arbitration** — four layers,
 each overwriting the one below it:
@@ -389,16 +402,13 @@ locomotion energy it would burn overshooting the thing it wanted. Everyone else 
 matters more than it sounds: a fleeing sheep and a chasing fox both run flat out, so the
 knife-edge chase balance the whole ecosystem depends on is untouched.
 
-And that's the whole hardcoded mind. No memory, no plan, no state between ticks — a pure function from
-"what I can see right now" to six numbers. Crude, and yet enough to keep a world alive.
+And that's the whole hardcoded mind. No territory awarness, no memory, no plan, no state between ticks — a pure function from "what I can see right now" to six numbers. Crude, and yet enough to keep a world alive.
+
 ## Coexistence
 
-This world is "fragile," because it's the most
-counterintuitive thing I learned building darwinism.
-
-Getting sheep and foxes to *coexist* — to settle into sustained oscillations instead of one
+Getting sheep and foxes to *coexist* — This was one of the challenging things at the begenning, to settle into sustained oscillations instead of one
 side wiping out and dragging the other down with it — took a stack of small, realistic
-mechanisms, and pulling out almost any single one collapses the predator. A few of them:
+mechanisms, combination of different parameters and carefully adjusted values, and pulling out almost any single one collapses the predator. A few methods of them:
 
 - **A refuge.** Sheep hidden in forest cover are invisible and uncatchable to foxes. This
   reservoir stops the prey from ever going fully extinct. But its *size* is a razor's edge:
@@ -421,9 +431,12 @@ The reason I'm telling you this in the RL chapter is that it's *the same fragili
 learning so hard.* A world this sensitive to a single parameter is a world where a learning
 agent's mistakes are punished savagely and its luck is amplified wildly. The thing that makes
 the ecosystem beautiful to watch is the exact thing that makes it merciless to learn in.
+
+## Analysis
+
+One of the feature darwinism provides is the plotting of data into meaningful charts so we can actually observe useful patterns from it.
 ```python
 python -m darwinism.analysis.plots runs/run.csv --out analysis/out # to plot the analysis graph from a csv
-
 darwinism-run --ticks 20000 --monitor # for live plotting
 ```
 ![The analysis report](highlights/analysisOut.png)
@@ -437,7 +450,7 @@ equation — no predator–prey model. Just thousands of little agents
 eating, fleeing and breeding on their own. The orbit Lotka and Volterra derived with pen and
 paper a century ago simply *showed up*, uninvited.
 
-## First question: can a CNN even read this world?
+## Vision verification: can a CNN actually read this world?
 
 Before handing a network the whole job of staying alive, there's a much smaller question worth
 answering: can it *see* at all? Every plan I had downstream assumed a CNN could look at those
@@ -486,15 +499,7 @@ nothing pulling the weights anywhere. That's the sparse-reward exploration trap,
 *lethally* sparse: an agent that hasn't learned to eat starves in a few hundred ticks and takes
 its lineage with it.
 
-And sitting with that is genuinely one of the more haunting things this project has made me
-think about. Maybe *this* is part of why life on Earth took so unfathomably long to get
-interesting — billions of years of single cells, barely changing, because the first step is
-always the improbable one. Not because complexity is hard to *build*, but because the very first
-lucky coincidence is so vanishingly rare that only a whole planet running the experiment in
-parallel for an eternity is enough to find it at all. And then look what happens once a
-breakthrough *is* found: eyes, predation, hard body parts — and the Cambrian goes off like a
-bomb, half the body plans we'd ever see appearing in a geological blink. The waiting is the slow
-part. Once something basic is finally learned, the explosion is almost immediate.
+And sitting with that is genuinely one of the more haunting things this project has made me think about. Maybe this is part of why life on Earth took so unimaginably long to become visibly complex—not because evolution wasn't happening, but because some transitions may have been extraordinarily difficult to cross. For billions of years, life remained microscopic even as profound innovations accumulated beneath the surface. Perhaps a whole planet, running countless chemical experiments in parallel over immense spans of time, was needed for one of those breakthroughs to emerge. And then look what happens once a new possibility exists: eyes, predation, hard body parts—and the Cambrian Explosion unfolds with astonishing speed, many of the major animal body plans appearing within a geological instant. The waiting may be the slow part. Once a genuinely transformative innovation arrives, evolution can move with remarkable speed.
 
 Which is a beautiful thought and a terrible engineering constraint. Evolution paid for that
 first step with four billion years and an entire planet of parallel attempts. I have a laptop
@@ -549,16 +554,90 @@ the teacher.** A cloned fox at most performs as best as the hand-written rules a
 want animals that discover strategies I never programmed — *smarter* predators which builds different strategies to catch preys, preys that understands terrain and elevation to run faster — I need them to learn from **consequences**, not from imitation. So we need
 reinforcement learning.
 
-So I built it. Animals **learn while they're
-awake and update while they sleep**: each individual quietly records its own experience as it
-lives, and when enough of the population beds down for the night, the simulation pauses and
-the policy takes a learning step — a little smarter by dawn. Rewards are inferred by watching what
-changes tick to tick: energy gained from a kill or a good graze, thirst quenched,
-offspring produced, health lost — and a death penalty that fires for *avoidable* deaths but
-forgives dying peacefully of old age. I even built an offline version, so I could log a run
-once and then train against that frozen dataset over and over without touching the sim.
+So I [built it](notebooks\live_learning\train.ipynb). The shape is deliberately simple: animals **learn while they're awake and update
+while they sleep**. There is no `RuleBrain` anywhere in the loop — both species are driven by
+their own learning policy, warm-started from the imitation clones, so the learner begins as an
+animal that already knows how to graze, drink and hunt rather than as noise. Here is what
+actually happens inside.
 
-It's a clean design. And it **didn't work — not yet.** The returns are a mess of noise. The
+**The policy becomes stochastic.** The cloned network output a single action; the learning one
+outputs a *distribution* to sample from, because you cannot learn from consequences without
+first trying things. The heading is drawn from a Gaussian around the network's predicted
+direction, with a learnable spread that lets the policy decide for itself how exploratory to be;
+eat, drink, breed and the speed throttle are Bernoulli coin-flips on their logits. Every decision
+therefore comes stamped with a log-probability — the number the update needs later. At
+deployment the same network switches back to acting greedily (the mean heading, gates
+thresholded), so a trained brain is deterministic and a run stays reproducible.
+
+**Reward and pain.** The simulation was never modified to hand out rewards — that would have
+polluted the sim core with training concerns. Instead the trainer photographs every animal's
+internal state before the tick and diffs it after. Energy gained is the big positive (a good
+graze, a successful hunt). Thirst *actually* relieved earns a bonus — only if the animal was
+genuinely thirsty, otherwise drinking at a full stomach would be free money. Producing offspring
+earns the largest single reward. Health change is signed: recovery pays, injury costs. A small
+living wage rewards simply still being here, set against a gentle penalty proportional to
+standing hunger and thirst, so being permanently needy is never comfortable. Then death. A death
+is detected by the animal's `birth_id` vanishing from its slot, and it delivers **pain** — but
+only if it was *avoidable*. If the animal was already past ~90% of its own `max_age` gene when it
+acted, it died of old age, which no decision could have prevented, and it is charged nothing.
+Penalising that would teach animals that living long is a mistake.
+
+**The buffer.** Each species owns a rollout buffer, and experience is filed into it **per
+individual, keyed by `birth_id`** — not pooled into one anonymous stream of transitions. That
+key is what makes a trajectory a trajectory: it lets the trainer follow one specific animal's
+life from decision to consequence, and it distinguishes "this slot's animal died" from "this slot
+was recycled to a newborn". Each stored step is the observation the animal actually saw (grids
+kept as float16 — the perception grids are the memory hog), the action it took, that action's
+log-probability, its reward, whether it died, and whether the action was genuinely its own.
+Tracking is capped at a fixed number of individuals per species per day, so memory doesn't scale
+with the population boom.
+
+**Cumulative reward.** A single tick's reward is almost meaningless here — running toward a
+distant water source pays nothing until you arrive. So at night every trajectory is walked
+*backwards*, accumulating a discounted return-to-go: each step's credit is its own reward plus
+0.99 × the credit of the step after it, reset to zero at a death, since death is terminal and
+nothing may bootstrap through it. Each action is therefore judged not by what it immediately
+earned but by everything that followed it in that animal's life, geometrically discounted. That
+backward accumulation is the entire difference from cloning: the signal is *consequence*, not
+imitation.
+
+**Critic-free.** Textbook PPO trains a value network beside the policy whose job is to predict
+the expected return, so the learning signal becomes (what actually happened − what was expected)
+— a low-variance *advantage*. I deliberately went **without one**, because the introduction of a state-value function makes our imitation learned actor useless and the whole learning has to start from scratch which is hard and improbable as we discussed earlier.
+
+**The update.** Then a standard clipped-PPO step over the day's batch. The current policy
+re-scores every stored observation–action pair; the ratio between the new and old
+log-probabilities says how much more (or less) likely each action has become; and the objective
+is *clipped* so that no single update can drag the policy far away from the one that actually
+gathered the data — the core PPO insight, since the data is only valid near the policy that
+produced it. A few epochs of minibatches, an entropy bonus so exploration doesn't collapse in the
+first few nights, gradient-norm clipping — and a **KL trust region** on top: the approximate KL
+divergence between the old and new policy is measured every minibatch, and if it blows past the
+target the update *aborts before applying the step that broke it*. With no critic to hold
+variance down, that brake is what stops one freak batch from wrecking a policy that took twenty
+nights to build. Then the buffers clear, the animals sleep through the rest of the night, and at
+daybreak collection resumes on the improved policy.
+
+**Night is read off the animals, not a clock.** When at least half the living population has
+bedded down — and the day has run some minimum length — that's night: pause and train. When the
+sleeping fraction falls back to a fifth, that's dawn: collect. The gap between those two
+thresholds is hysteresis, so dusk stragglers can't flicker the state machine back and forth.
+Sleeping ticks aren't collected at all, and the occasional animal whose action the sleep system
+overrides is flagged and dropped from the gradient entirely — it didn't choose that action, so it
+must be neither credited nor blamed for it.
+
+**Episodes.** The outer loop rebuilds the simulation from the identical world seed and run seed,
+so every episode replays the byte-identical starting world and only the policies, optimizers and
+sampling RNG carry across. Extinction is therefore not fatal to training: the world resets, the
+lessons persist, and the species gets another run at the same scenario.
+
+I even built an [**offline version**](notebooks\live_learning\offline\train_fox.ipynb), so I could log a run once and then train against that frozen
+dataset over and over without touching the sim — same reward function, same returns-to-go, same
+clipped update, with collection and learning simply split in time. (The cloning dataset couldn't
+be reused for it: that's a reservoir sample of independent observation→action rows with no
+rewards, no temporal order and no `birth_id`, so there is nothing to accumulate a return along.)
+
+RL was clean design but it **didn't work — not yet.** The returns are a mess of noise. The
 policies wobble and slide backward as often as forward. Let me show you what failure looks
 like, because the shape of the failure is interesting :
 
@@ -586,11 +665,8 @@ of that. First, the same underlying world state produces completely different ob
 depending on where an agent is standing, so the policy has to learn the
 invariance itself, from data, over many episodes. Second — and worse for RL — the *reverse*
 almost never happens: because every other agent is also moving, the terrain differs between
-worlds, and shifting a couple of cells rewrites the whole observation, an agent essentially
-never sees the *same* situation twice. Policy gradient learning is fundamentally a statistical
-argument over repeated visits to similar states. Strip out the repetition and each gradient
-step is estimated from different samples, so the updates point in inconsistent directions
-and mostly cancel.
+worlds, and shifting a couple of cells rewrites the whole observation, changes in vegitation, changes in weather or even temperature,  an agent essentially
+never sees the *same* exact situation twice. Policy gradient learning is fundamentally a statistical argument over repeated visits to similar states so a cumulative reward assignment can successfully differentiate the good and bad actions took in past. Strip out the repetition and each gradient step is estimated from different samples, so the updates point in inconsistent directions and mostly cancel.
 
 **3. Chaotic dynamics → catastrophic return variance.** Predator–prey coexistence in this
 world is *chaotic and fragile by construction* — small perturbations diverge into wildly
@@ -801,6 +877,6 @@ grassy plain today. A planet filling itself with invented life tomorrow.
 If any of that resonates, come poke at it. Break it. Grow something strange in it. And if it
 made you think — a star on the repo genuinely helps, and is much appreciated.
 
-**Thanks for reading both parts.** 🌍
+**Thanks for reading.** 🌍
 
 *— darwinism, by Afreedi Z.*
