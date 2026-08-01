@@ -323,65 +323,102 @@ into something far more alive. Let me tell you about both horizons: the next ste
 
 ## The near horizon: a richer mind, a richer world
 
-The immediate roadmap is about giving the animals *more to think about* and *more to do*:
+As we move forward we are going to imitate the real world as much as possible, for it we need more:
 
-- **Minds that choose their mates.** Right now, breeding is mostly opportunity. The next step
-  is real mate *selection* — animals evaluating partners, so sexual selection becomes a force
-  that shapes the genome, not just a coin flip.
-- **Brains that belong to groups.** A herd or a pack could share a brain, with new lineages
-  budding off their own as groups split and grow — the beginnings of social structure encoded
-  directly in how minds are inherited.
-- **Animals that can see their own kind — and cooperate, or compete.** Add a "same species"
-  perception channel and suddenly the door opens to territory, group hunting, and the whole
-  rich game-theory of living alongside your rivals.
-- **Communication.** A learnable signal one animal emits and others can perceive — the raw
-  ingredient of alarm calls, coordination, maybe eventually something like language. (There's
-  a whole field of multi-agent communication research to draw on here.)
-- **A world you can manipulate.** Rocks that block line of sight. Trees tall enough to feed
-  from — and that fall and open a clearing when they die. Objects that are *part of the
-  problem*, not just scenery.
-- **New worlds within the world.** Fish and amphibians in the oceans. Burrowing creatures in
-  the depths. Whole ecosystems stacked in the same planet.
-- **A truly interactable body.** New actions beyond move-and-eat: **swim, dig, pick things up,
-  put them down.** The moment an animal can *change* its environment instead of just crossing
-  it, the space of possible strategies explodes.
+- **Smarter entities — and court, cooperate, or compete.** A "same
+  species" perception channel is the small change that unlocks a lot at once. Breeding stops
+  being mostly opportunity and becomes real mate *selection*, with animals evaluating partners
+  so sexual selection shapes the genome instead of a coin flip. And the same channel opens the
+  door to territory, group hunting, and the whole rich game-theory of living alongside your
+  rivals. Give them a **learnable signal** on top of it — something one animal emits and others
+  can perceive — and you have the raw ingredient of alarm calls, coordination, maybe eventually
+  something like language. (There's a whole field of multi-agent communication research to draw
+  on here.) And a **truly interactable body** to act on all of it: new actions beyond
+  move-and-eat — **swim, dig, pick things up, put them down.** The moment an animal can *change*
+  its environment instead of just crossing it, the space of possible strategies explodes.
+- **Wider worlds.** More *stuff* in the world, and more world to put it in. Rocks that block
+  line of sight. Trees tall enough to feed from — and that fall and open a clearing when they
+  die. Objects that are *part of the problem*, not just scenery. And beyond the grassland:
+  fish and amphibians in the oceans, burrowing creatures in the depths — whole ecosystems
+  stacked in the same planet.
+- **Neuroevolution — minds shaped by survival, not by a gradient.** Instead of training a brain
+  against a reward function I invented, let the weights (and eventually the architecture) be
+  mutated and selected by who actually lives long enough to breed. No hand-written objective,
+  just lineages of minds competing in the world. One appealing way to get there is **brains that
+  belong to groups**: a herd or a pack shares a brain, and new lineages bud off their own as
+  groups split and grow — so social structure ends up encoded directly in how minds are
+  inherited.
 
-Each of these fits *through the same doorway* from Part 2. A new action is a new column in the
-action matrix. A new sense is a new perception channel. A new species is a declaration, not a
-rewrite — I can already add one as pure configuration, give it a diet and a set of genes, and
-the perception system, the genome, and the physics all adapt around it automatically. The
-foundations were laid for exactly this kind of growth.
+## The far horizon: a real world, and entities that evolve into it
 
-## The far horizon: bodies that evolve
+Here's the vision that actually keeps me up at night. It has two halves, and they only work
+together: a world made of **matter** instead of adjectives, and creatures whose **bodies** are
+free to change in response to it. A richer world with fixed bodies is just prettier scenery;
+evolvable bodies in a world of labels have nothing to evolve *toward*. Put both in and the
+world starts posing problems nobody typed in.
 
-Here's the vision that actually keeps me up at night.
+### A Real World
 
-Today, an animal's *body* is fixed. A sheep is a sheep; a fox is a fox. Genes tune numbers —
-how fast, how far it sees, how big — but the fundamental body plan is hardcoded. That's the
-last big thing I want to tear down.
+Right now a tile is a label — `forest`, `water`, `rock` — a word the systems agree to
+interpret. The far-horizon version deletes the labels and builds the world out of **matter**:
+fundamental particles and the compounds they form, each with real properties — mass, hardness,
+density, melting point, flammability, conductivity, solubility — and rules for how they
+interact. Terrain stops being a texture and becomes a *material*. Once that's true, an enormous
+amount stops needing to be programmed:
 
-Imagine instead that the **body itself is part of the genome** — not just parameters, but
-*structure*. Animals that can grow new parts and organs over generations, in response to how
-they actually live. And then let the world do the selecting:
+- **Ground you can dig, and stuff you can carry.** Terrain isn't a passable/impassable flag;
+  it's a volume of particles you can displace. Dig and you get a hole, and a pile of what used
+  to be in it — and that pile, like everything else in the world, is an object with mass. Any
+  piece of it can be picked up, dragged or carried if the creature is strong enough, a straight
+  comparison of the object's mass against the animal's strength: sticks, stones, leaves, bones,
+  corpses, other animals. So burrows, tunnels, dens and warrens become things animals *make*,
+  not features I implement — and nest-building isn't a "build nest" action, it's a body strong
+  enough to move twigs plus a lineage for whom moving twigs paid off. Dig too deep in the wrong
+  material and it collapses on you.
+- **Chemistry all the way down.** Things rot, rust, ferment, dissolve, and
+  poison. Nutrients cycle because a corpse actually decomposes into the soil that grows the
+  grass. A mineral vein is a real deposit somewhere, not a spawn table — and something that eats
+  it gets whatever it was made of. Combustion is just one more reaction in that set: strike the
+  right rock hard enough against the right rock and you throw sparks; land a spark on something
+  dry and flammable and you have a fire that spreads by the actual moisture and fuel of what's
+  around it. Lightning does it by accident. A creature that learns to do it on purpose has
+  crossed a line I never coded.
 
-- Creatures that spend generations in the ocean gradually develop **gills**, and become
-  something like **fish**.
-- Creatures that jump constantly to escape or to reach food slowly develop **wings**, and
-  become something like **birds**.
-- Creatures that climb develop the limbs for it and become something like **monkeys**.
-- Creatures that dig and live in colonies become something like **ants** — with all the
-  emergent complexity that implies.
-- And somewhere out at the edge: creatures that learn to **use tools**, or to **build nests** —
-  not because I programmed a "build nest" behaviour, but because the animals that happened to
-  do it survived better, and their descendants inherited the habit and the body to support it.
+The point isn't realism for its own sake. It's that **a world made of materials has far more
+affordances than a world made of labels** — and affordances are what evolution has to be clever
+about. Tool use isn't a feature you add to a simulation like this; it's something that becomes
+*possible*, and then, if the pressure is right, inevitable.
+
+### An Evolving Entity
+
+The other half is the creature. Today an animal's *body* is fixed: a sheep is a sheep, a fox is
+a fox. Genes tune numbers — how fast, how far it sees, how big — but the fundamental body plan
+is hardcoded. That's the last big thing I want to tear down. Imagine instead that the **body
+itself is part of the genome** — not just parameters, but *structure*: animals that grow new
+parts and organs over generations, in response to how they actually live. Then let the world do
+the selecting:
+
+- **Water selects for gills.** Creatures that spend generations in the ocean become something
+  like **fish** — not because there's an aquatic species in a config file, but because that's
+  what survives out there.
+- **Height selects for grip, and for wings.** Creatures that climb develop the limbs for it and
+  become something like **monkeys**; creatures that jump constantly to escape or to reach food
+  slowly develop **wings**, and become something like **birds**.
+- **Ground selects for digging — and digging selects for society.** Creatures that burrow and
+  live in colonies become something like **ants**, with all the emergent complexity that
+  implies.
+- **And out at the edge: tools and nests.** Not because I programmed a "build nest" behaviour,
+  but because the animals that happened to do it survived better, and their descendants
+  inherited the habit *and* the body to support it, the elder ones in the colonies communicate informations to the younger ones. This is where the two halves meet — a
+  material world hands the creature something to pick up, and an evolvable body eventually
+  grows the thing that can pick it up.
 
 The dream is a world where you don't *define* the species. You define the **physics, the
 possible parts, and the pressures** — and then you press play and watch the tree of life fill
-itself in. Where "bird" and "fish" and "digger" aren't categories I typed into a config file,
-but *answers the world discovered* to the problem of staying alive in the ocean, or the air,
-or underground.
+itself in. Where "Terrestrial", "Aquatic" and "Aerial" aren't categories I typed into a config file,
+but *answers the world discovered* to the problem of staying alive in the ground, ocean or air.
 
-That's why every design choice fought so hard to keep the brain and the body as **numbers a
+That's why every design choice fought so hard to keep the brain and the body as **numbers so a
 model can evolve and a network can learn**, rather than logic a programmer has to hand-write.
 Hardcoded rules can't grow wings. Distributions, genomes, and differentiable policies can.
 
@@ -390,9 +427,7 @@ Hardcoded rules can't grow wings. Distributions, genomes, and differentiable pol
 This isn't just a very elaborate screensaver. A world like this is a **laboratory for
 questions you cannot ethically or practically ask of the real one**:
 
-- **Evolution, sped up and rewound.** Run the same world a thousand times with different luck
-  and ask which outcomes were destiny and which were chance. Replay a lineage. Freeze a trait
-  and see what breaks. Deep time, on a laptop, perfectly reproducible.
+- **Evolution, sped up and rewound** Simulate the same world thousands of times under different random conditions to separate determinism from chance. Replay entire lineages. Lock a single trait in place and observe the consequences. Millions of years of evolution, compressed into a reproducible controllable user-paced experiment on your laptop.
 - **Ecology, under the microscope.** What *exactly* makes a predator and prey coexist versus
   collapse? I found out the hard way that it's a knife's edge of refuge size, hunting
   efficiency, and metabolism — and now I can *vary each one and measure*. That's a real
@@ -401,10 +436,9 @@ questions you cannot ethically or practically ask of the real one**:
   cooperation beat going it alone? What conditions summon social structure, or tool use, or
   something that looks, if you squint, like culture? These are among the deepest questions in
   biology, and a synthetic world lets you *run the experiment* instead of just arguing about it.
-- **A sandbox for open-ended AI.** And selfishly: this is one of the hardest environments I
+- **A sandbox for open-ended AI.** : this is one of the hardest environments I
   can imagine for machine learning — multi-agent, co-evolving, chaotic, sparse-reward. If a
-  learning algorithm can produce genuinely adaptive intelligence *here*, that's worth knowing.
-  The wall I hit earlier is a wall the whole field is still climbing.
+  learning algorithm can produce genuinely adaptive intelligence *here*, its a break through for various fields in science.
 
 ## Come build in it
 
@@ -412,7 +446,7 @@ darwinism is open source, under a non-commercial research license, and it's a **
 just an app.** You can `pip install` it, spin up a world in a few lines of Python, and extend
 it around four clean seams — **species, brains, tick-systems, and heritable traits** — without
 touching the core. Add a rabbit as a block of config. Bolt on a disease that sweeps through
-the herds. Write your own brain — rules, a neural net, whatever — and watch it try to survive.
+the herds. Write your own brain — rules, a neural net, whatever — and watch it trying to survive.
 
 ```python
 import darwinism as dw
