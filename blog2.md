@@ -16,13 +16,18 @@ step — the wins and the wall.
 
 ## The first Brain: hardcoded rules
 
+Before reaching for a *learnable* brain, We had to prove survival is possible — that these
+observations can be mapped to actions that keep an animal alive, by *any* algorithm at all. If
+hand-written rules can't do it, no gradient is going to find its way there either. So the first
+mind is deliberately hardcoded: a few hundred lines of `if` statements called
+[`RuleBrain`](darwinism/sim/brain.py). It's the
+existence proof, and once it works it doubles as the teacher every learned brain gets measured
+against.
+
 RuleBrain receives a stack of egocentric image channels — terrain, water, food, threat,
 mate, plus a radial distance channel — a little `K×K` picture centred on each animal. A neural
 network eats that natively. Hand-written `if` statements cannot. So the rule brain's first job
-is to *undo* the picture: **decode each channel back into a single target.**
-
-That decoding is two operations, and the difference between them is quietly the difference
-between a grazer and a hunter:
+is to *undo* the picture: **decode each channel back into a single target.** which are two operations
 
 - **Nearest.** For threats, water, and mates, all that matters is *which one is closest.* Scan
   the channel, take the non-zero cell with the smallest radial distance, and report back its
@@ -41,12 +46,9 @@ each overwriting the one below it:
    produces a smooth walk rather than a seizure.
 2. **Reproduce.** If energy is high and hunger and thirst are low and a mate is visible, steer
    at the mate — and once it reads adjacent, raise the reproduce gate.
-3. **Needs.** Food drive is `max(hunger, 1 − energy)` — deliberately *not* hunger alone, because
+3. **Needs.** Food drive is `max(hunger, 1 − energy)` — *not* hunger alone, because
    hunger rises too slowly to save an animal whose reserve is draining. Whichever need is more
-   pressing, food or water, sets the heading, but only if it's genuinely *urgent*; a mild need
-   doesn't get to cancel courtship. Eating and drinking, though, are **opportunistic**: if
-   there's grass or water right here and you're not full, top up regardless of what you were
-   doing. That one detail is why the animals spend most of their lives free to breed and explore
+   pressing, food or water, sets the heading, but only if it's genuinely *urgent*; These details are why the animals spend most of their lives free to breed and explore
    instead of permanently commuting to lunch.
 4. **Flee** (overrides everything). If a predator is close — within 45% of sensory range, not
    merely *somewhere* in view — turn and run directly away, and drop every gate: no eating, no
@@ -58,10 +60,8 @@ locomotion energy it would burn overshooting the thing it wanted. Everyone else 
 matters more than it sounds: a fleeing sheep and a chasing fox both run flat out, so the
 knife-edge chase balance the whole ecosystem depends on is untouched.
 
-And that's the whole mind. No memory, no plan, no state between ticks — a pure function from
-"what I can see right now" to six numbers. Crude, and yet enough to keep a world alive, which
-is exactly what makes it a usable teacher.
-
+And that's the whole hardcoded mind. No memory, no plan, no state between ticks — a pure function from
+"what I can see right now" to six numbers. Crude, and yet enough to keep a world alive.
 ## Coexistence
 
 This world is "fragile," because it's the most
@@ -92,23 +92,62 @@ The reason I'm telling you this in the RL chapter is that it's *the same fragili
 learning so hard.* A world this sensitive to a single parameter is a world where a learning
 agent's mistakes are punished savagely and its luck is amplified wildly. The thing that makes
 the ecosystem beautiful to watch is the exact thing that makes it merciless to learn in.
+```python
+python -m darwinism.analysis.plots runs/run.csv --out analysis/out # to plot the analysis graph from a csv
 
+darwinism-run --ticks 20000 --monitor # for live plotting
+```
 ![The analysis report](highlights/analysisOut.png)
 
-*Every run produces this: populations over time (the predator–prey pulse), the vegetation
-biomass rising and falling underneath it, the slow drift of a sheep trait across generations —
-the actual signal of evolution happening — and the phase plot, sheep against foxes, tracing
-the orbit that Lotka and Volterra predicted with pen and paper a century ago. Except this one
-is made of thousands of individuals, each seeing the world through its own eyes.*
+*The analysis outputs 4 graphs: populations over time, the vegetation
+biomass rising and falling, the slow drift of a sheep trait across generations —
+the actual signal of evolution happening — and the phase plot, sheep against foxes*
 
-That last panel still gets me. A loop I first met as an abstract pair of differential
-equations, redrawn from the bottom up by a crowd of little agents who have no idea they're
-collectively obeying it.
+That last graph is the beautiful part. Nowhere in this codebase is there a Lotka–Volterra
+equation — no predator–prey model. Just thousands of little agents
+eating, fleeing and breeding on their own. The orbit Lotka and Volterra derived with pen and
+paper a century ago simply *showed up*, uninvited.
 
-## Imitation learning — and it worked
+## First question: can a CNN even read this world?
 
-So why start by *copying* the rules instead of letting the animals figure life out themselves?
-Because of how staggeringly improbable "figuring it out" is from scratch.
+Before handing a network the whole job of staying alive, there's a much smaller question worth
+answering: can it *see* at all? Every plan I had downstream assumed a CNN could look at those
+egocentric perception grids and recover **where** things are. If that assumption is wrong,
+nothing built on top of it can work.
+
+So I built a tiny, focused dataset. Each sample was a fox's-eye view — its terrain channel and
+its "where's the prey" channel — paired with a heading, labelled by whether that heading
+pointed **toward** the sheep or away from it.
+
+![The fox's vision dataset](highlights/foxVisionLearningDataset.gif)
+
+*A flip-book through the training data: the fox sits at the centre, a sheep blip appears
+somewhere in its field of view, and each frame is labelled by whether a candidate heading
+points toward the prey or off in the wrong direction. This is the raw material — pure
+perception grids — that the model learns to read.*
+
+Then I trained a small vision model on it and asked, *which way is the sheep?*
+
+![The fox learned to point](highlights/foxVisionTrainedResult.png)
+
+*Four unseen scenarios, the sheep placed in a different direction each time. In every one, the
+trained model points its arrow straight at the prey. The network isn't pattern-matching a
+memorized layout — it's genuinely recovering direction from the spatial arrangement of the
+input channels.* [`notebook`](notebooks\vision_learning\fox\train_model.ipynb)
+
+*(The sheep got the same treatment — its own vision dataset of terrain, food, and threat
+channels — to confirm the prey side of the world is just as readable.)*
+
+## Imitation learning — the first real brain
+
+So a CNN *can* read this world: it sees the grids, and it knows where things are. That's the
+capability proven — but knowing where the sheep is isn't the same as knowing how to live. The
+next step was a whole brain: eyes, internal state, and six output numbers, driving a real
+animal through a real world.
+
+And the way I chose to build it was by *copying* the rule brain rather than letting the animals
+figure life out themselves. Why? Because of how staggeringly improbable "figuring it out" is
+from scratch.
 
 Think about what a random-weight network has to stumble into. A sheep earns its first reward only by happening to stand on grass *and* happening to raise the eat gate on that same
 tick; a fox has to close on an uncovered, actively fleeing sheep with the right gate up; and
@@ -156,7 +195,12 @@ cloning.**.
 3. **Evaluate.** Take the trained clone, drop it back into the *real* simulation as the actual
    brain, and see if it can stand on its own.
 
-And it could. **The cloned brains self-sustain.** Drop a learned sheep policy and a learned
+
+```python
+darwinism-live --sheep-brain notebooks/imitation_learning/sheep.pt --fox-brain notebooks/imitation_learning/fox.pt
+```
+
+And it worked. **The cloned brains self-sustain.** Drop a learned sheep policy and a learned
 fox policy into a fresh world, let go, and the populations don't collapse — they graze, they
 hunt, they breed, they cycle. A neural network, driving animals through the exact same
 contract as the rules, keeping an ecosystem alive. That was the first moment the whole "build
@@ -165,62 +209,29 @@ it AI-first" bet paid off: the drop-in was genuinely a drop-in.
 This is the frontier I've actually reached. The animals can be run by learned brains that
 imitate a competent teacher and keep their world running.
 
-## A detour that convinced me the eyes work
-
-Somewhere in the middle of this, I ran a small experiment that I still think is the most
-*charming* result in the whole project. I wanted to know: can a network actually *read* those
-egocentric perception grids spatially? Not "does the pipeline run" — does the model genuinely
-understand *where* something is from the raw channels?
-
-So I built a tiny, focused dataset. Each sample was a fox's-eye view — its terrain channel and
-its "where's the prey" channel — paired with a heading, labelled by whether that heading
-pointed **toward** the sheep or away from it.
-
-![The fox's vision dataset](highlights/foxVisionLearningDataset.gif)
-
-*A flip-book through the training data: the fox sits at the centre, a sheep blip appears
-somewhere in its field of view, and each frame is labelled by whether a candidate heading
-points toward the prey or off in the wrong direction. This is the raw material — pure
-perception grids — that the model learns to read.*
-
-Then I trained a small vision model on it and asked it the only question that matters: *given
-a fresh view, which way is the sheep?*
-
-![The fox learned to point](highlights/foxVisionTrainedResult.png)
-
-*Four unseen scenarios, the sheep placed in a different direction each time. In every one, the
-trained model points its arrow straight at the prey. The network isn't pattern-matching a
-memorized layout — it's genuinely recovering direction from the spatial arrangement of the
-input channels.*
-
-That figure is small but it settled a big worry. The perception design isn't just
-*convenient* for a CNN — it's *legible* to one. The spatial information a hunter needs really
-is in there, and a network really can extract it. Everything downstream depends on that being
-true, and here it was, being true.
-
-*(The sheep got the same treatment — its own vision dataset of terrain, food, and threat
-channels — to confirm the prey side of the world is just as readable.)*
+*(the framework has a `PolicyBrain` that satisfies the same `Brain`
+contract and just wraps a PyTorch network. Checkpoints are TorchScript (JIT) archives — code and
+weights together — so the model never has to be redefined to load it.)*
 
 ## Reinforcement learning — the way and the wall
 
 Cloning a teacher is wonderful, but it has a ceiling: **the student can never be better than
-the teacher.** A cloned fox hunts exactly as well as my hand-written rules, no better. If I
-want animals that discover strategies I never programmed — *smarter* predators, preys that understands terrain and elevation to run faster — I need them to learn from **consequences**, not from imitation. I need
+the teacher.** A cloned fox at most performs as best as the hand-written rules are, no better. If I
+want animals that discover strategies I never programmed — *smarter* predators which builds different strategies to catch preys, preys that understands terrain and elevation to run faster — I need them to learn from **consequences**, not from imitation. So we need
 reinforcement learning.
 
-So I built it. The setup is, I think, rather elegant on paper. Animals **learn while they're
+So I built it. Animals **learn while they're
 awake and update while they sleep**: each individual quietly records its own experience as it
 lives, and when enough of the population beds down for the night, the simulation pauses and
-the policy takes a learning step — a little smarter by dawn. The imitation clones from Step 2
-are the warm start, so nobody begins from pure noise. Rewards are inferred by watching what
-changes tick to tick: energy gained from a kill or a good graze, thirst genuinely quenched,
+the policy takes a learning step — a little smarter by dawn. Rewards are inferred by watching what
+changes tick to tick: energy gained from a kill or a good graze, thirst quenched,
 offspring produced, health lost — and a death penalty that fires for *avoidable* deaths but
 forgives dying peacefully of old age. I even built an offline version, so I could log a run
 once and then train against that frozen dataset over and over without touching the sim.
 
 It's a clean design. And it **didn't work — not yet.** The returns are a mess of noise. The
 policies wobble and slide backward as often as forward. Let me show you what failure looks
-like, because the shape of the failure is genuinely interesting:
+like, because the shape of the failure is interesting :
 
 ![Reinforcement learning, refusing to converge](highlights/foxRlout.png)
 
@@ -228,33 +239,65 @@ like, because the shape of the failure is genuinely interesting:
 instead it thrashes. Policy entropy, population, and the KL "trust region" all lurch around.
 This is not a bug in the plumbing — it's the world fighting back.*
 
-Three things about *this particular world* conspire against a simple RL learner, and together
-they're brutal:
+Four properties of *this particular world* conspire against a simple policy-gradient learner,
+and together they're brutal:
 
-**1. The ground keeps moving.** Sheep and foxes learn *at the same time.* As the sheep get
-better at fleeing, the fox's world quietly changes — the same hunting move that worked last
-night works worse tonight, through no fault of the fox's own learning. Every animal is aiming
-at a target that's aiming back. The problem isn't stationary, and most of the simple RL theory
-quietly assumes it is.
+**1. Non-stationarity from co-adaptation.** Policy gradient methods assume a *fixed* MDP:
+one environment, one reward landscape, sitting still while you climb it. Here that assumption
+is simply false. Sheep and foxes train simultaneously, and each species' policy is part of the
+other's transition dynamics. When the fox learns to chase, it is implicitly approximating "how
+sheep move" — but the sheep update overnight too, and the function the fox was fitting no
+longer exists by morning. From either side the environment is a moving target, so a policy that
+genuinely improved against last night's opponent can score *worse* tonight through no fault of
+its own gradient. The optimisation problem changes shape at the same rate you solve it.
 
-**2. The luck is enormous.** As I'll get to in a moment, predator–prey coexistence here is
-*chaotic and fragile by nature.* One lucky hunt or one unlucky prey crash can dominate an
-animal's entire lifetime reward. Without a "critic" network to smooth out that variance — and
-I deliberately kept the design critic-free to keep the deployable brain simple — the learning
-signal is so noisy that the updates are as likely to hurt as help, and the safety brake that's
-supposed to stop bad updates just keeps slamming on.
+**2. Partial observability + state aliasing.** Each animal perceives the world through an
+**egocentric** window — a local patch centred on itself, not the map. Two consequences fall out
+of that. First, the same underlying world state produces completely different observations
+depending on where an agent is standing, so the policy has to learn the
+invariance itself, from data, over many episodes. Second — and worse for RL — the *reverse*
+almost never happens: because every other agent is also moving, the terrain differs between
+worlds, and shifting a couple of cells rewrites the whole observation, an agent essentially
+never sees the *same* situation twice. Policy gradient learning is fundamentally a statistical
+argument over repeated visits to similar states. Strip out the repetition and each gradient
+step is estimated from different samples, so the updates point in inconsistent directions
+and mostly cancel.
 
-**3. The reward arrives late, and to the wrong address.** The things that actually matter —
-successfully raising offspring, surviving a lean stretch — happen *many* moments after the
-decisions that caused them. Which earlier step earned that kill? Which earlier turn avoided
-that death? The reward can't cleanly say. For a memoryless learner with no value function to
-bridge the gap, that's the hardest possible regime: sparse, delayed, and mis-attributed
-credit.
+**3. Chaotic dynamics → catastrophic return variance.** Predator–prey coexistence in this
+world is *chaotic and fragile by construction* — small perturbations diverge into wildly
+different population trajectories. That means the return-to-go for two nearly identical states
+can differ by an order of magnitude: one lucky hunt, or one deep prey trough the agent had no
+part in causing, dominates an entire lifetime's reward. A critic exists precisely to absorb
+this variance by predicting the expected return and turning it into a low-variance advantage.
+I deliberately kept the design critic-free so I could keep the imitation-learned weights that
+already understand the basics — which leaves a whitened-return baseline as the only variance
+reduction, and it isn't enough. The result is exactly what the plots show: high-variance,
+destabilising updates, and a KL trust region that keeps early-stopping to protect the policy
+from its own noisy gradient.
+
+**4. Sparse, delayed, mis-attributed reward.** The outcomes that actually matter — breeding
+successfully, surviving a lean stretch, not starving — arrive hundreds of ticks after the
+decisions that caused them, while the tick-to-tick reward is inferred from a snapshot diff that
+cannot say *which* earlier action earned a later kill or avoided a later death. That is the
+classic temporal credit assignment problem, and it is normally solved either by a value
+function that bootstraps reward backwards through time, or by memory that lets a policy
+condition on what led here. This learner has neither: it is memoryless and critic-free. Sparse,
+delayed, mis-attributed credit is the hardest regime there is, and I walked into it with the
+fewest tools.
+
+And bolting memory on is not the free fix it sounds like. A recurrent policy no longer reasons
+about the current observation alone — it reasons about a *history*, which means the thing being
+learned is a mapping from an entire trajectory, and the gradient has to travel back through
+every step of that trajectory to assign blame. That multiplies the credit assignment problem
+rather than dissolving it: the hidden state is itself learned, so early-training memory is
+noise that the policy nonetheless conditions on, and combined with points 1–3 — a moving
+opponent, near-unique observations, chaotic returns — the variance goes *up*, not down. Memory
+is almost certainly part of the answer here, but it is the kind of thing you add once you have
+a critic to hold the variance down, not before.
 
 None of these are plumbing bugs. They're the *nature of the problem* — the exact reasons that
 open-ended, multi-agent, co-evolutionary RL is a genuine research frontier and not a solved
-recipe. Naming them precisely is, honestly, part of the result. I know exactly which wall I'm
-standing at, and why it's hard, which is a much better place to be than "it just doesn't work."
+recipe.
 
 ---
 
@@ -276,8 +319,7 @@ of an idea. Two species. A handful of actions. A flat world you walk across.
 I built it small on purpose, because I needed the foundations to be right before making them
 big. But the whole reason the architecture is shaped the way it is — a world of pure numbers,
 a single brain contract, bodies described by an evolvable genome — is that it's meant to grow
-into something far more alive. Let me tell you about both horizons: the next steps I can
-already see clearly, and the distant one I'm actually building toward.
+into something far more alive. Let me tell you about both horizons: the next steps we are going to take and the distant one we are actually building toward.
 
 ## The near horizon: a richer mind, a richer world
 
