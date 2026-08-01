@@ -1,15 +1,6 @@
 # darwinism: Simulating a world for AI and teaching them to Live.
 
-<!-- *A two-part series on building an AI friendly ecosystem-and-evolution
-simulation — a whole planet of terrain, weather and seasons where agents as animals hunt, flee,
-breed, and evolve across generations, where everything is engineered from the ground up so that a neural
-network can one day take over their minds.*
-
-*Part 1 of 2 — the idea, the world and the agents* -->
-
----
-
-![The world, alive](highlights/demo.gif)
+![The world, alive](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/demo.gif)
 
 *(White dots are sheep. Red dots are foxes. The green haze is grass. A tiny black dot on an
 animal's shoulder marks a male; the ones without are female.)*
@@ -40,10 +31,9 @@ two fields are the *only* real inputs. Everything else is derived from them:
   everything below sea level.
 - **Temperature** is latitude minus altitude — warm near the equator, cold up a mountain.
 
-The order is the one real world uses. We never *place* a forest. we place moisture and elevation, and the forest is what they imply. The map is a consequence, not a decision, also everything from sea level to soil nutrients are [`configurable`](darwinism\config.py) . The whole world from elevation, biome classification, temperature or even upto water are pure numbers in a width x height grid. A sample X-ray of the world :
+The order is the one real world uses. We never *place* a forest. we place moisture and elevation, and the forest is what they imply. The map is a consequence, not a decision, also everything from sea level to soil nutrients are [`configurable`](https://github.com/afreediz/darwinism/blob/main/darwinism/config.py) . The whole world from elevation, biome classification, temperature or even upto water are pure numbers in a width x height grid. A sample X-ray of the world :
 
-![The world under the hood](highlights/worldXray.png)
-
+![The world under the hood](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/worldXray.png)
 *The same world, X-rayed into the raw fields. ocean mask, elevation, moisture, temperature, the biome labels, and the soil-nutrient pool. To the
 animals none of this is a picture — it's just numbers on a grid.*
 
@@ -77,13 +67,13 @@ buys you a thousand days — three years of seasons, birth, starvation and mutat
 while you're still holding the coffee. Nothing about the world changes when you do this. The
 sheep doesn't know it's living faster. You've just decided how much of it you want to see.
 
-![Time slowed to a quarter speed](highlights/demo0.25x.gif)
+![Time slowed to a quarter speed](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/demo0.25x.gif)
 
-![The same world at four times speed](highlights/demo4x.gif)
+![The same world at four times speed](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/demo4x.gif)
 
 The engine which runs whole logic and the viewer which present it as GUI are seperate. There's a
-[**live viewer**](darwinism\sim) — a window, an observer, draws the pixels.
-[**headless runner**](darwinism\render) — which has no window at all and is where the real work happens. It is made this way because of frame rate, which is a ceiling that could limit us the amount of steps we can do per second, most GUI/game engine sets FPS limit as nobody can read 10,000 frames a second. Take the drawing away and the ceiling disappears; the loop runs as fast as the cpu allows, no limit on how faster the world can run.
+[**live viewer**](https://github.com/afreediz/darwinism/blob/main/darwinism/render) — a window, an observer, draws the pixels.
+[**headless runner**](https://github.com/afreediz/darwinism/blob/main/darwinism/sim) — which has no window at all and is where the real work happens. It is made this way because of frame rate, which is a ceiling that could limit us the amount of steps we can do per second, most GUI/game engine sets FPS limit as nobody can read 10,000 frames a second. Take the drawing away and the ceiling disappears; the loop runs as fast as the cpu allows, no limit on how faster the world can run.
 
 # The Agents
 
@@ -99,7 +89,7 @@ brain.decide(observation) -> action
 
 Like the real world, the brain is essentially a black box inside the skull. It receives information from our sensory organs, processes it, and sends commands to the rest of the body.
 
-![The brain↔world contract](highlights/brainContract.png)
+![The brain↔world contract](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/brainContract.png)
 
 *Perception goes in as pure tensors; a decision comes out as a
 plain matrix of numbers; the world's systems enforce what's actually allowed. Swap the middle
@@ -175,7 +165,7 @@ purely a hunter — automatically grows a `threat` channel in its own perception
 fleeing something. A third trophic level appears out of two dataclasses.
 
 ## Perception: precieving the world of numbers
-![What an agent actually sees](highlights/whatAgentSee_15x15.png)
+![What an agent actually sees](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/whatAgentSee_15x15.png)
 
 (*A 15×15 slice of what an animal perceives*)
 
@@ -244,7 +234,7 @@ animal just… eat? What if there's no food next to it? What if it's lying about
 mate?
 
 The answer is that **the brain only ever *proposes*.** It expresses intent. Whether that
-intent becomes reality is decided by the world's [**systems**](darwinism\sim\systems) — separate pieces of logic that enforce the actual rules of physics and biology. The brain says "I want to eat"; the consumption system checks whether there's really grass in the cell the animal is standing on.
+intent becomes reality is decided by the world's [**systems**](https://github.com/afreediz/darwinism/blob/main/darwinism/sim/systems) — separate pieces of logic that enforce the actual rules of physics and biology. The brain says "I want to eat"; the consumption system checks whether there's really grass in the cell the animal is standing on.
 The brain says "I want to breed"; the reproduction system checks whether there's genuinely an
 eligible partner within arm's reach, and whether both animals have the energy to spare.
 
@@ -301,7 +291,7 @@ hundred generations and the population *isn't the same population anymore*. It h
 
 All of this happens in a fixed heartbeat. Every tick, the world runs the sequence:
 
-![The tick pipeline](highlights/tickPipeline.png)
+![The tick pipeline](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/tickPipeline.png)
 
 *The world advances the clock and weather, rebuilds its spatial index, shows every animal its
 local view, asks each brain to decide, lets the sleepers rest, then moves, feeds, ages, and
@@ -314,9 +304,9 @@ running for **tens of thousands** of ticks, fast enough to actually iterate on. 
 in the way, and either one alone is enough to bring the whole thing to a crawl and cook your
 machine. The first is the classic design pattern used by games in which each **entity is an object**, but it would lead to a big list to loop over — where every single tick means walking thousands of scattered objects in python which will easily cook our RAM out of PC. The second is the frequently used function **Nearest X**, which every animal uses in every tick to find nearest prey or nearest best grass or nearest threat, Compare every animal to every other is **quadratic** — double the population and you quadruple the cost — so the moment the world gets crowded, the exact moment it gets interesting, the machine dies. So overcoming both challenge is the only option to scale or it will waste both computation and memory, to solve them we use some efficent approaches :
 
-**[Structure Of Array(SoA)](darwinism/sim/entities.py) :** *no animal objects at all.* Every animal is a row index into parallel NumPy arrays — one array of x-positions, one of energies, one of hunger values — which means "make every hungry animal a little hungrier" is a single vectorized operation over the whole population, this approach with the lightning speed of numpy makes the whole operations alot faster and smoother.
+**[Structure Of Array(SoA)](https://github.com/afreediz/darwinism/blob/main/darwinism/sim/entities.py) :** *no animal objects at all.* Every animal is a row index into parallel NumPy arrays — one array of x-positions, one of energies, one of hunger values — which means "make every hungry animal a little hungrier" is a single vectorized operation over the whole population, this approach with the lightning speed of numpy makes the whole operations alot faster and smoother.
 
-**[Spatial hash grid](darwinism/sim/grid.py) :** the world is diced into buckets, each animal drops
+**[Spatial hash grid](https://github.com/afreediz/darwinism/blob/main/darwinism/sim/grid.py) :** the world is diced into buckets, each animal drops
 into its bucket once per tick, and neighbour queries only look at the handful of nearby buckets —
 so "who is near me?" costs a constant peek at a few cells instead of a sweep over the whole
 population. Perception gets the same treatment — the egocentric grids are built as a sliding window over the padded world fields, masked by each animal's vision disc, all at once instead of per animal.
@@ -337,7 +327,7 @@ Before reaching for a *learnable* brain, We have to prove survival is possible �
 observations can be mapped to actions that can keep an animal alive, because If
 hand-written rules can't do it, no gradient is going to find its way there either. So the first
 mind is deliberately hardcoded: a few hundred lines of `if` statements called
-[`RuleBrain`](darwinism/sim/brain.py). It's the
+[`RuleBrain`](https://github.com/afreediz/darwinism/blob/main/darwinism/sim/brain.py). It's the
 existence proof, and once it works it can also be used as the teacher every learned brain gets measured against.
 
 RuleBrain receives a stack of egocentric image channels — terrain, water, food, threat,
@@ -439,7 +429,7 @@ One of the feature darwinism provides is the plotting of data into meaningful ch
 python -m darwinism.analysis.plots runs/run.csv --out analysis/out # to plot the analysis graph from a csv
 darwinism-run --ticks 20000 --monitor # for live plotting
 ```
-![The analysis report](highlights/analysisOut.png)
+![The analysis report](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/analysisOut.png)
 
 *The analysis outputs 4 graphs: populations over time, the vegetation
 biomass rising and falling, the slow drift of a sheep trait across generations —
@@ -461,7 +451,7 @@ So I built a tiny, focused dataset. Each sample was a fox's-eye view — its ter
 its "where's the prey" channel — paired with a heading, labelled by whether that heading
 pointed **toward** the sheep or away from it.
 
-![The fox's vision dataset](highlights/foxVisionLearningDataset.gif)
+![The fox's vision dataset](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/foxVisionLearningDataset.gif)
 
 *A flip-book through the training data: the fox sits at the centre, a sheep blip appears
 somewhere in its field of view, and each frame is labelled by whether a candidate heading
@@ -470,12 +460,12 @@ perception grids — that the model learns to read.*
 
 Then I trained a small vision model on it and asked, *which way is the sheep?*
 
-![The fox learned to point](highlights/foxVisionTrainedResult.png)
+![The fox learned to point](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/foxVisionTrainedResult.png)
 
 *Four unseen scenarios, the sheep placed in a different direction each time. In every one, the
 trained model points its arrow straight at the prey. The network isn't pattern-matching a
 memorized layout — it's genuinely recovering direction from the spatial arrangement of the
-input channels.* [`notebook`](notebooks\vision_learning\fox\train_model.ipynb)
+input channels.* [`notebook`](https://github.com/afreediz/darwinism/blob/main/notebooks/vision_learning/fox/train_model.ipynb)
 
 *(The sheep got the same treatment — its own vision dataset of terrain, food, and threat
 channels — to confirm the prey side of the world is just as readable.)*
@@ -554,7 +544,7 @@ the teacher.** A cloned fox at most performs as best as the hand-written rules a
 want animals that discover strategies I never programmed — *smarter* predators which builds different strategies to catch preys, preys that understands terrain and elevation to run faster — I need them to learn from **consequences**, not from imitation. So we need
 reinforcement learning.
 
-So I [built it](notebooks\live_learning\train.ipynb). The shape is deliberately simple: animals **learn while they're awake and update
+So I [built it](https://github.com/afreediz/darwinism/blob/main/notebooks/live_learning/train.ipynb). The shape is deliberately simple: animals **learn while they're awake and update
 while they sleep**. There is no `RuleBrain` anywhere in the loop — both species are driven by
 their own learning policy, warm-started from the imitation clones, so the learner begins as an
 animal that already knows how to graze, drink and hunt rather than as noise. Here is what
@@ -631,7 +621,7 @@ so every episode replays the byte-identical starting world and only the policies
 sampling RNG carry across. Extinction is therefore not fatal to training: the world resets, the
 lessons persist, and the species gets another run at the same scenario.
 
-I even built an [**offline version**](notebooks\live_learning\offline\train_fox.ipynb), so I could log a run once and then train against that frozen
+I even built an [**offline version**](https://github.com/afreediz/darwinism/blob/main/notebooks/live_learning/offline/train_fox.ipynb), so I could log a run once and then train against that frozen
 dataset over and over without touching the sim — same reward function, same returns-to-go, same
 clipped update, with collection and learning simply split in time. (The cloning dataset couldn't
 be reused for it: that's a reservoir sample of independent observation→action rows with no
@@ -641,7 +631,7 @@ RL was clean design but it **didn't work — not yet.** The returns are a mess o
 policies wobble and slide backward as often as forward. Let me show you what failure looks
 like, because the shape of the failure is interesting :
 
-![Reinforcement learning, refusing to converge](highlights/foxRlout.png)
+![Reinforcement learning, refusing to converge](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/foxRlout.png)
 
 *Training a fox with reinforcement learning. Mean return per cycle (top-left) should climb;
 instead it thrashes. Policy entropy, population, and the KL "trust region" all lurch around.
