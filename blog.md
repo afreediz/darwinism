@@ -664,15 +664,12 @@ its own gradient. The optimisation problem changes shape at the same rate you so
 of that. First, the same underlying world state produces completely different observations
 depending on where an agent is standing, so the policy has to learn the
 invariance itself, from data, over many episodes. Second — and worse for RL — the *reverse*
-almost never happens: because every other agent is also moving, the terrain differs between
-worlds, and shifting a couple of cells rewrites the whole observation, changes in vegitation, changes in weather or even temperature,  an agent essentially
-never sees the *same* exact situation twice. Policy gradient learning is fundamentally a statistical argument over repeated visits to similar states so a cumulative reward assignment can successfully differentiate the good and bad actions took in past. Strip out the repetition and each gradient step is estimated from different samples, so the updates point in inconsistent directions and mostly cancel.
+almost never happens: because every other agent is moving, the terrain differs between
+worlds, changes in vegitation even when an agent is standing due to vegetation growth or consumption by other agents, changes in temperature and shifting a couple of cells rewrites the whole observation available in the sensory range of an agent, so an agent essentially
+never sees the *same* exact situation twice. Policy gradient learning is fundamentally a statistical argument over repeated visits to similar states so a cumulative reward/pain assignment can successfully differentiate the good and bad actions took in past. Strip out the repetition and each gradient step is estimated from different samples, so the updates point in inconsistent directions and mostly cancel.
 
 **3. Chaotic dynamics → catastrophic return variance.** Predator–prey coexistence in this
-world is *chaotic and fragile by construction* — small perturbations diverge into wildly
-different population trajectories. That means the return-to-go for two nearly identical states
-can differ by an order of magnitude: one lucky hunt, or one deep prey trough the agent had no
-part in causing, dominates an entire lifetime's reward. A critic exists precisely to absorb
+world is *chaotic and fragile by construction* — A critic exists precisely to absorb
 this variance by predicting the expected return and turning it into a low-variance advantage.
 I deliberately kept the design critic-free so I could keep the imitation-learned weights that
 already understand the basics — which leaves a whitened-return baseline as the only variance
@@ -706,20 +703,14 @@ recipe.
 
 ---
 
-So that's the state of the climb: a world purpose-built for learning, learned brains that
-successfully imitate a competent teacher and keep their ecosystem alive, proof that the
-perception really is legible to a network — and an honest, well-understood wall where
-open-ended reinforcement learning meets a chaotic multi-agent world.
+So, that's everything we've built and achieved so far. This whole project was never really about getting some species to fight with each other, making them coexist so we can play the GOD. They're the *simplest possible* test of an idea that's much bigger — so before I close, let me tell you where this project is actually
+going towards.
 
-But this whole project was never really about sheep and foxes. They're the *simplest possible*
-test of an idea that's much bigger — so before I close, let me tell you where this is actually
-going.
-
-## From two species to a living planet
+## A world for models
 
 Everything I've shown you so far — the noise-carved world, the egocentric eyes, the drop-in
 brains, the fragile predator–prey dance — is, in the end, the *smallest interesting version*
-of an idea. Two species. A handful of actions. A flat world you walk across.
+of a big idea.
 
 I built it small on purpose, because I needed the foundations to be right before making them
 big. But the whole reason the architecture is shaped the way it is — a world of pure numbers,
@@ -730,7 +721,7 @@ into something far more alive. Let me tell you about both horizons: the next ste
 
 As we move forward we are going to imitate the real world as much as possible, for it we need more:
 
-- **Smarter entities — and court, cooperate, or compete.** A "same
+- **Smarter entities** A "same
   species" perception channel is the small change that unlocks a lot at once. Breeding stops
   being mostly opportunity and becomes real mate *selection*, with animals evaluating partners
   so sexual selection shapes the genome instead of a coin flip. And the same channel opens the
@@ -740,10 +731,14 @@ As we move forward we are going to imitate the real world as much as possible, f
   something like language. (There's a whole field of multi-agent communication research to draw
   on here.) And a **truly interactable body** to act on all of it: new actions beyond
   move-and-eat — **swim, dig, pick things up, put them down.** The moment an animal can *change*
-  its environment instead of just crossing it, the space of possible strategies explodes.
+  its environment instead of just crossing it, the space of possible strategies explodes. And
+  none of that goes very far without **memory**: today's brain is memoryless, every decision a
+  pure function of the current frame. Add a recurrent core — an LSTM behind the same contract —
+  and an animal can carry a little of its past with it: the water it drank from a hundred ticks
+  ago, the fox it just fled, the patch it already grazed bare.
 - **Wider worlds.** More *stuff* in the world, and more world to put it in. Rocks that block
   line of sight. Trees tall enough to feed from — and that fall and open a clearing when they
-  die. Objects that are *part of the problem*, not just scenery. And beyond the grassland:
+  die. expanding the habitable world beyond land surface:
   fish and amphibians in the oceans, burrowing creatures in the depths — whole ecosystems
   stacked in the same planet.
 - **Neuroevolution — minds shaped by survival, not by a gradient.** Instead of training a brain
@@ -752,15 +747,13 @@ As we move forward we are going to imitate the real world as much as possible, f
   just lineages of minds competing in the world. One appealing way to get there is **brains that
   belong to groups**: a herd or a pack shares a brain, and new lineages bud off their own as
   groups split and grow — so social structure ends up encoded directly in how minds are
-  inherited.
+  inherited, smarter models survives longer by building strategies or models chose strength giving hard competitions, different behaviours can be observed inside the same specie group.
 
 ## The far horizon: a real world, and entities that evolve into it
 
-Here's the vision that actually keeps me up at night. It has two halves, and they only work
+Here's the vision that we aim for the future. It has two halves, and they only work
 together: a world made of **matter** instead of adjectives, and creatures whose **bodies** are
-free to change in response to it. A richer world with fixed bodies is just prettier scenery;
-evolvable bodies in a world of labels have nothing to evolve *toward*. Put both in and the
-world starts posing problems nobody typed in.
+free to change in response to it.
 
 ### A Real World
 
@@ -771,7 +764,7 @@ density, melting point, flammability, conductivity, solubility — and rules for
 interact. Terrain stops being a texture and becomes a *material*. Once that's true, an enormous
 amount stops needing to be programmed:
 
-- **Ground you can dig, and stuff you can carry.** Terrain isn't a passable/impassable flag;
+- **Ground you can dig, and stuff agents can carry.** Terrain isn't a passable/impassable flag;
   it's a volume of particles you can displace. Dig and you get a hole, and a pile of what used
   to be in it — and that pile, like everything else in the world, is an object with mass. Any
   piece of it can be picked up, dragged or carried if the creature is strong enough, a straight
@@ -780,8 +773,7 @@ amount stops needing to be programmed:
   not features I implement — and nest-building isn't a "build nest" action, it's a body strong
   enough to move twigs plus a lineage for whom moving twigs paid off. Dig too deep in the wrong
   material and it collapses on you.
-- **Chemistry all the way down.** Things rot, rust, ferment, dissolve, and
-  poison. Nutrients cycle because a corpse actually decomposes into the soil that grows the
+- **Chemistry all the way down.** Nutrients cycle because a corpse actually decomposes into the soil that grows the
   grass. A mineral vein is a real deposit somewhere, not a spawn table — and something that eats
   it gets whatever it was made of. Combustion is just one more reaction in that set: strike the
   right rock hard enough against the right rock and you throw sparks; land a spark on something
