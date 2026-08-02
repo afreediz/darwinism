@@ -186,17 +186,7 @@ Every one of those grids is read the same way: the animal is always at the exact
 distance grows outward from it. That's what "egocentric" means — the window doesn't move
 with the map, it moves with the animal, and cell `(0, 0)` is always *the agent itself*:
 
-```
-              distance channel, vision range R = 3
-
-              .    .    .   3.0   .    .    .
-              .   2.8  2.2  2.0  2.2  2.8   .
-              .   2.2  1.4  1.0  1.4  2.2   .
-             3.0  2.0  1.0 [ me ] 1.0  2.0  3.0
-              .   2.2  1.4  1.0  1.4  2.2   .
-              .   2.8  2.2  2.0  2.2  2.8   .
-              .    .    .   3.0   .    .    .
-```
+![Ego centric distance](https://raw.githubusercontent.com/afreediz/darwinism/main/highlights/egocentricDistance.png)
 
 Everything outside the animal's personal vision range is zeroed out. A sheep with weak eyes
 sees a small disc; a sharp-eyed fox sees a big one. Nothing is global. Blindness is real —
